@@ -272,7 +272,6 @@ payment-terminal-system/
 ├── data/                 # SQLite database
 ├── logs/                 # Log files
 ├── start-server-simple.js # Terminal system server
-├── qwallet-server-es.js  # QWallet server
 └── package.json
 ```
 
@@ -391,8 +390,6 @@ kill -9 <PID>
 
 See [MOBILE_API.md](MOBILE_API.md) for detailed mobile API documentation.
 
-See [PAYMENT_COMPLETION_SOLUTION.md](PAYMENT_COMPLETION_SOLUTION.md) for payment completion flow details.
-
 ## Contributing
 
 1. Fork the repository
@@ -417,7 +414,7 @@ For issues and questions:
 ### Version 1.0.0
 
 - Initial release
-- NFC and QR payment support
+- NFC (not integrated because of HTTPS requirement, and QR payment support)
 - Admin panel
 - Terminal interface
 - QWallet integration
