@@ -1,5 +1,5 @@
 # qPOS
-[[image here]]
+<img src="thumbnail.png" alt="System was tested on real terminal" width="500">
 
 A modern payment POS terminal system with NFC (not integrated yet) and QR code payment support via QWallet
 
