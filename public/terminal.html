@@ -1,0 +1,2113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Терминал оплаты</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Animated background particles */
+        .bg-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .particle:nth-child(1) { width: 20px; height: 20px; left: 10%; animation-delay: 0s; }
+        .particle:nth-child(2) { width: 15px; height: 15px; left: 20%; animation-delay: 1s; }
+        .particle:nth-child(3) { width: 25px; height: 25px; left: 30%; animation-delay: 2s; }
+        .particle:nth-child(4) { width: 18px; height: 18px; left: 40%; animation-delay: 3s; }
+        .particle:nth-child(5) { width: 22px; height: 22px; left: 50%; animation-delay: 4s; }
+        .particle:nth-child(6) { width: 16px; height: 16px; left: 60%; animation-delay: 5s; }
+        .particle:nth-child(7) { width: 24px; height: 24px; left: 70%; animation-delay: 0.5s; }
+        .particle:nth-child(8) { width: 19px; height: 19px; left: 80%; animation-delay: 1.5s; }
+        .particle:nth-child(9) { width: 21px; height: 21px; left: 90%; animation-delay: 2.5s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+        }
+
+        .terminal-container {
+            width: min(90vw, 800px);
+            height: min(90vh, 600px);
+            background: rgba(15, 15, 35, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 32px;
+            box-shadow: 
+                0 40px 80px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .terminal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            color: white;
+            padding: clamp(20px, 5vw, 28px);
+            text-align: center;
+            border-radius: 32px 32px 0 0;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .terminal-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255,255,255,0.2) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .terminal-id {
+            font-size: clamp(20px, 5vw, 28px);
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .terminal-operator {
+            font-size: clamp(14px, 3vw, 16px);
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        .terminal-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: clamp(20px, 5vw, 40px);
+            position: relative;
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            text-align: center;
+            animation: screenFadeIn 0.6s ease-out;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        @keyframes screenFadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Waiting Screen */
+        .waiting-screen {
+            color: #f1f5f9;
+        }
+
+        /* Login Screen */
+        .login-screen {
+            color: #f1f5f9;
+        }
+
+        /* Idle Screen */
+        .idle-screen {
+            color: #f1f5f9;
+        }
+
+        .idle-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+        }
+
+        .idle-icon {
+            font-size: clamp(64px, 16vw, 120px);
+            margin-bottom: clamp(20px, 5vw, 30px);
+            opacity: 0.7;
+            animation: idleFloat 4s ease-in-out infinite;
+        }
+
+        @keyframes idleFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .idle-title {
+            font-size: clamp(24px, 6vw, 36px);
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: clamp(8px, 2vw, 12px);
+            text-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .idle-subtitle {
+            font-size: clamp(16px, 4vw, 20px);
+            color: #94a3b8;
+            margin-bottom: clamp(30px, 8vw, 50px);
+            font-weight: 400;
+        }
+
+        .idle-animation {
+            position: relative;
+            width: clamp(80px, 20vw, 120px);
+            height: clamp(80px, 20vw, 120px);
+            margin: clamp(20px, 5vw, 40px) auto;
+        }
+
+        .pulse-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: pulse 3s ease-out infinite;
+        }
+
+        .pulse-ring-delay-1 {
+            animation-delay: 1s;
+        }
+
+        .pulse-ring-delay-2 {
+            animation-delay: 2s;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(2);
+                opacity: 0;
+            }
+        }
+
+        .idle-info {
+            margin-top: clamp(30px, 8vw, 50px);
+            display: flex;
+            flex-direction: column;
+            gap: clamp(12px, 3vw, 16px);
+            align-items: center;
+        }
+
+        .terminal-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: clamp(14px, 3.5vw, 16px);
+            font-weight: 600;
+            color: #10b981;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: statusPulse 2s infinite;
+        }
+
+        .status-dot.online {
+            background: #10b981;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+
+        .status-dot.offline {
+            background: #ef4444;
+            animation: none;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .last-activity {
+            font-size: clamp(12px, 3vw, 14px);
+            color: #64748b;
+            font-weight: 400;
+        }
+
+        .terminal-info {
+            text-align: center;
+            margin-bottom: clamp(30px, 8vw, 50px);
+        }
+
+        .terminal-name {
+            font-size: clamp(24px, 6vw, 32px);
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .terminal-details {
+            font-size: clamp(14px, 3.5vw, 16px);
+            color: #7f8c8d;
+            font-weight: 500;
+        }
+
+        .login-form {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: clamp(20px, 5vw, 30px);
+        }
+
+        .password-input {
+            width: 100%;
+            padding: clamp(16px, 4vw, 20px);
+            font-size: clamp(18px, 4.5vw, 24px);
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 20px;
+            background: rgba(15, 15, 35, 0.8);
+            color: #f1f5f9;
+            text-align: center;
+            letter-spacing: 2px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .password-input::placeholder {
+            color: #64748b;
+        }
+
+        .password-input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(15, 15, 35, 0.95);
+            box-shadow: 
+                0 0 0 4px rgba(102, 126, 234, 0.2),
+                0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .login-buttons {
+            display: flex;
+            justify-content: center;
+            margin-bottom: clamp(20px, 5vw, 30px);
+        }
+
+        .login-error {
+            background: rgba(231, 76, 60, 0.1);
+            color: #e74c3c;
+            padding: clamp(12px, 3vw, 16px);
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: clamp(14px, 3.5vw, 16px);
+            border: 1px solid rgba(231, 76, 60, 0.2);
+        }
+
+        .amount-label {
+            font-size: clamp(24px, 6vw, 36px);
+            font-weight: 300;
+            margin-bottom: 8px;
+            color: #667eea;
+            letter-spacing: 1px;
+        }
+
+        .amount-display {
+            font-size: clamp(48px, 12vw, 96px);
+            font-weight: 800;
+            color: #f1f5f9;
+            margin-bottom: clamp(20px, 5vw, 40px);
+            letter-spacing: -2px;
+            line-height: 0.9;
+            text-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        }
+        .card-visual {
+            width: clamp(200px, 40vw, 320px);
+            height: clamp(125px, 25vw, 200px);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: clamp(20px, 5vw, 40px) auto;
+            position: relative;
+            overflow: hidden;
+            animation: cardFloat 3s ease-in-out infinite;
+        }
+
+        .card-visual::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: cardShimmer 2s linear infinite;
+        }
+
+        .card-logo {
+            font-size: clamp(32px, 8vw, 64px);
+            font-weight: 300;
+            color: #667eea;
+            z-index: 1;
+        }
+
+        @keyframes cardFloat {
+            0%, 100% { transform: translateY(0px) rotateX(0deg); }
+            50% { transform: translateY(-8px) rotateX(2deg); }
+        }
+
+        @keyframes cardShimmer {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .payment-options {
+            display: flex;
+            gap: clamp(16px, 4vw, 24px);
+            margin-top: clamp(20px, 5vw, 40px);
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .payment-button {
+            padding: clamp(12px, 3vw, 16px) clamp(24px, 6vw, 32px);
+            font-size: clamp(16px, 4vw, 18px);
+            font-weight: 600;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+            position: relative;
+            overflow: hidden;
+            min-width: 140px;
+        }
+
+        .payment-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .payment-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(102, 126, 234, 0.4);
+        }
+
+        .payment-button:hover::before {
+            left: 100%;
+        }
+
+        .payment-button:active {
+            transform: translateY(0px);
+        }
+
+        /* Payment Systems Logos */
+        .payment-system-logos {
+            margin-top: clamp(20px, 5vw, 30px);
+            text-align: center;
+            display: none;
+        }
+
+        .payment-systems-title {
+            font-size: clamp(14px, 3.5vw, 16px);
+            color: #94a3b8;
+            margin-bottom: clamp(12px, 3vw, 16px);
+            font-weight: 500;
+        }
+
+        .payment-systems-grid {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: clamp(12px, 3vw, 16px);
+            flex-wrap: wrap;
+        }
+
+        .payment-system-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: clamp(8px, 2vw, 12px);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .payment-system-item:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .payment-system-logo {
+            height: clamp(24px, 6vw, 32px);
+            width: auto;
+            max-width: clamp(60px, 15vw, 80px);
+            display: block;
+        }
+
+        .payment-system-text {
+            font-size: clamp(10px, 2.5vw, 12px);
+            color: #f1f5f9;
+            font-weight: 600;
+            padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 12px);
+            display: block;
+        }
+        /* Processing Screen */
+        .processing-screen {
+            color: #2c3e50;
+        }
+
+        .processing-spinner {
+            width: clamp(60px, 15vw, 100px);
+            height: clamp(60px, 15vw, 100px);
+            border: 4px solid rgba(102, 126, 234, 0.2);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: clamp(20px, 5vw, 30px) auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .processing-dots {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: dotPulse 1.4s ease-in-out infinite both;
+        }
+
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+        .dot:nth-child(3) { animation-delay: 0s; }
+
+        @keyframes dotPulse {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1.2); opacity: 1; }
+        }
+
+        /* Success Screen */
+        .success-screen {
+            color: #27ae60;
+        }
+
+        .success-icon {
+            width: clamp(80px, 20vw, 120px);
+            height: clamp(80px, 20vw, 120px);
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: clamp(20px, 5vw, 30px) auto;
+            animation: successPop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 16px 32px rgba(39, 174, 96, 0.3);
+        }
+
+        .success-icon::before {
+            content: '✓';
+            font-size: clamp(32px, 8vw, 48px);
+            color: white;
+            font-weight: bold;
+        }
+
+        @keyframes successPop {
+            0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+            50% { transform: scale(1.1) rotate(-90deg); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        /* Error Screen */
+        .error-screen {
+            color: #e74c3c;
+        }
+
+        .error-icon {
+            width: clamp(80px, 20vw, 120px);
+            height: clamp(80px, 20vw, 120px);
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: clamp(20px, 5vw, 30px) auto;
+            animation: errorShake 0.6s ease-out;
+            box-shadow: 0 16px 32px rgba(231, 76, 60, 0.3);
+        }
+
+        .error-icon::before {
+            content: '✕';
+            font-size: clamp(32px, 8vw, 48px);
+            color: white;
+            font-weight: bold;
+        }
+
+        @keyframes errorShake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+            20%, 40%, 60%, 80% { transform: translateX(8px); }
+        }
+        /* QR Code Screen */
+        .qr-code-container {
+            background: white;
+            padding: clamp(16px, 4vw, 24px);
+            border-radius: 20px;
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.1);
+            margin: clamp(20px, 5vw, 30px) 0;
+            animation: qrFadeIn 0.5s ease-out;
+        }
+
+        .qr-code {
+            width: clamp(150px, 30vw, 200px);
+            height: clamp(150px, 30vw, 200px);
+            display: block;
+        }
+
+        @keyframes qrFadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .status-message {
+            font-size: clamp(18px, 4.5vw, 24px);
+            margin: clamp(16px, 4vw, 20px) 0;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .countdown {
+            font-size: clamp(14px, 3.5vw, 16px);
+            color: #7f8c8d;
+            margin-top: clamp(12px, 3vw, 16px);
+            font-weight: 500;
+        }
+
+        .error-code {
+            font-family: 'Courier New', monospace;
+            background: rgba(231, 76, 60, 0.1);
+            padding: 8px 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+            font-size: clamp(12px, 3vw, 14px);
+        }
+
+        /* Responsive breakpoints */
+        @media (max-width: 768px) {
+            .terminal-container {
+                width: 95vw;
+                height: 95vh;
+                border-radius: 20px;
+            }
+            
+            .payment-options {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .payment-button {
+                width: 100%;
+                max-width: 280px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .terminal-container {
+                width: 100vw;
+                height: 100vh;
+                border-radius: 0;
+            }
+            
+            .terminal-header {
+                border-radius: 0;
+            }
+        }
+
+        @media (orientation: landscape) and (max-height: 600px) {
+            .terminal-container {
+                height: 100vh;
+                border-radius: 0;
+            }
+            
+            .terminal-header {
+                padding: 12px 24px;
+                border-radius: 0;
+            }
+            
+            .terminal-content {
+                padding: 20px;
+            }
+            
+            .amount-display {
+                margin-bottom: 20px;
+            }
+            
+            .card-visual {
+                margin: 20px auto;
+            }
+        }
+
+        /* 480x480 Square Screen Optimization */
+        @media (max-width: 480px) and (max-height: 480px) {
+            .terminal-container {
+                width: 100vw;
+                height: 100vh;
+                border-radius: 0;
+                padding: 0;
+            }
+            
+            .terminal-header {
+                padding: 8px 16px;
+                border-radius: 0;
+            }
+            
+            .terminal-id {
+                font-size: 18px;
+                margin-bottom: 2px;
+            }
+            
+            .terminal-operator {
+                font-size: 12px;
+            }
+            
+            .terminal-content {
+                padding: 12px;
+            }
+            
+            /* Optimize QR Code for 480x480 */
+            .qr-code-container {
+                padding: 12px;
+                margin: 8px 0;
+                border-radius: 12px;
+            }
+            
+            .qr-code {
+                width: 280px !important;
+                height: 280px !important;
+                max-width: 70vw;
+                max-height: 70vw;
+            }
+            
+            /* Optimize amount display */
+            .amount-display {
+                font-size: 32px;
+                margin-bottom: 12px;
+                line-height: 1;
+            }
+            
+            .amount-label {
+                font-size: 16px;
+                margin-bottom: 4px;
+            }
+            
+            /* Optimize status messages */
+            .status-message {
+                font-size: 16px;
+                margin: 8px 0;
+                line-height: 1.2;
+            }
+            
+            /* Optimize countdown */
+            .countdown {
+                font-size: 12px;
+                margin-top: 8px;
+            }
+            
+            /* Optimize payment buttons */
+            .payment-button {
+                padding: 8px 16px;
+                font-size: 14px;
+                min-width: 120px;
+                margin: 4px;
+            }
+            
+            .payment-options {
+                gap: 8px;
+                margin-top: 12px;
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            /* Optimize card visual */
+            .card-visual {
+                width: 160px;
+                height: 100px;
+                margin: 12px auto;
+            }
+            
+            .card-logo {
+                font-size: 32px;
+            }
+            
+            /* Optimize idle screen */
+            .idle-icon {
+                font-size: 48px;
+                margin-bottom: 12px;
+            }
+            
+            .idle-title {
+                font-size: 20px;
+                margin-bottom: 6px;
+            }
+            
+            .idle-subtitle {
+                font-size: 14px;
+                margin-bottom: 20px;
+            }
+            
+            .idle-animation {
+                width: 60px;
+                height: 60px;
+                margin: 16px auto;
+            }
+            
+            /* Optimize success/error icons */
+            .success-icon, .error-icon {
+                width: 60px;
+                height: 60px;
+                margin: 12px auto;
+            }
+            
+            .success-icon::before, .error-icon::before {
+                font-size: 24px;
+            }
+            
+            /* Optimize processing spinner */
+            .processing-spinner {
+                width: 50px;
+                height: 50px;
+                margin: 12px auto;
+            }
+            
+            /* Optimize payment system logos */
+            .payment-system-logos {
+                margin-top: 12px;
+            }
+            
+            .payment-systems-title {
+                font-size: 12px;
+                margin-bottom: 8px;
+            }
+            
+            .payment-systems-grid {
+                gap: 8px;
+            }
+            
+            .payment-system-item {
+                padding: 6px;
+                border-radius: 8px;
+            }
+            
+            .payment-system-logo {
+                height: 20px;
+                max-width: 50px;
+            }
+            
+            .payment-system-text {
+                font-size: 10px;
+                padding: 3px 6px;
+            }
+            
+            /* Optimize login form */
+            .password-input {
+                padding: 12px;
+                font-size: 16px;
+                border-radius: 12px;
+            }
+            
+            .login-error {
+                padding: 8px;
+                font-size: 12px;
+                border-radius: 8px;
+            }
+            
+            /* Optimize terminal info */
+            .terminal-name {
+                font-size: 18px;
+                margin-bottom: 4px;
+            }
+            
+            .terminal-details {
+                font-size: 12px;
+            }
+            
+            /* Optimize NFC waiting screen */
+            #nfcWaitingScreen .amount-display {
+                font-size: 28px;
+                margin-bottom: 8px;
+            }
+            
+            #nfcWaitingScreen .card-visual {
+                width: 140px;
+                height: 88px;
+                margin: 8px auto;
+            }
+            
+            #nfcWaitingScreen .card-logo {
+                font-size: 28px;
+            }
+            
+            /* Optimize payment method info */
+            .payment-method-info {
+                margin-bottom: 12px !important;
+            }
+            
+            .payment-method-info div:first-child {
+                font-size: 12px !important;
+                margin-bottom: 4px !important;
+            }
+            
+            .payment-method-info div:last-child {
+                font-size: 14px !important;
+            }
+            
+            /* Optimize test instructions */
+            .test-instructions {
+                margin-top: 12px !important;
+            }
+            
+            .test-instructions div {
+                font-size: 11px !important;
+                padding: 8px !important;
+                border-radius: 8px !important;
+            }
+        }
+
+        /* Specific optimization for exactly 480x480 square displays */
+        @media (width: 480px) and (height: 480px) {
+            /* Make QR code even larger for exact 480x480 resolution */
+            .qr-code {
+                width: 320px !important;
+                height: 320px !important;
+            }
+            
+            .qr-code-container {
+                padding: 8px;
+                margin: 4px 0;
+            }
+            
+            /* Minimize other elements to maximize QR code space */
+            .status-message {
+                font-size: 14px;
+                margin: 4px 0;
+            }
+            
+            .amount-display {
+                font-size: 24px;
+                margin-bottom: 8px;
+            }
+            
+            .countdown {
+                font-size: 11px;
+                margin-top: 4px;
+            }
+            
+            .terminal-header {
+                padding: 6px 12px;
+            }
+            
+            .terminal-content {
+                padding: 8px;
+            }
+        }
+
+        /* Square aspect ratio optimization (for any square screen) */
+        @media (aspect-ratio: 1/1) and (max-width: 500px) {
+            .qr-code {
+                width: min(300px, 65vw) !important;
+                height: min(300px, 65vw) !important;
+            }
+            
+            .terminal-content {
+                padding: clamp(8px, 2vw, 16px);
+            }
+            
+            .amount-display {
+                font-size: clamp(24px, 6vw, 32px);
+            }
+            
+            .status-message {
+                font-size: clamp(14px, 3.5vw, 18px);
+            }
+        }
+
+        /* High DPI displays */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            .terminal-container {
+                box-shadow: 
+                    0 32px 64px rgba(0, 0, 0, 0.15),
+                    0 0 0 0.5px rgba(255, 255, 255, 0.2);
+            }
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            .terminal-container {
+                background: rgba(30, 30, 30, 0.95);
+                color: #ffffff;
+            }
+            
+            .waiting-screen, .processing-screen {
+                color: #ffffff;
+            }
+            
+            .amount-display {
+                color: #ffffff;
+            }
+            
+            .countdown {
+                color: #a0a0a0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated background particles -->
+    <div class="bg-particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
+    <div class="terminal-container">
+        <div class="terminal-header">
+            <div class="terminal-id" id="terminalId">Терминал</div>
+            <div class="terminal-operator" id="terminalOperator">Загрузка...</div>
+        </div>
+
+        <div class="terminal-content">
+            <!-- Login Screen -->
+            <div class="screen login-screen active" id="loginScreen">
+                <div class="status-message">Вход в терминал</div>
+                <div class="terminal-info" id="terminalInfo">
+                    <div class="terminal-name" id="terminalNameDisplay">Терминал</div>
+                    <div class="terminal-details" id="terminalDetailsDisplay">Загрузка...</div>
+                </div>
+                
+                <div class="login-form">
+                    <div class="form-group">
+                        <input type="password" class="password-input" id="passwordInput" placeholder="Введите пароль терминала" maxlength="20">
+                    </div>
+                    <div class="login-buttons">
+                        <button class="payment-button" id="loginButton">
+                            🔓 Войти
+                        </button>
+                    </div>
+                    <div class="login-error" id="loginError" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Waiting Screen -->
+            <div class="screen waiting-screen" id="waitingScreen">
+                <div class="payment-method-info" id="paymentMethodInfo" style="margin-bottom: 20px; text-align: center;">
+                    <div style="font-size: clamp(14px, 3.5vw, 16px); color: #94a3b8; margin-bottom: 8px;">
+                        Способ оплаты:
+                    </div>
+                    <div id="paymentMethodDisplay" style="font-size: clamp(16px, 4vw, 20px); color: #667eea; font-weight: 600;">
+                        NFC
+                    </div>
+                </div>
+                
+                <div class="amount-label">Оплата</div>
+                <div class="amount-display" id="amountDisplay">0₽</div>
+                
+                <div class="card-visual">
+                    <div class="card-logo">$</div>
+                </div>
+                
+                <div class="payment-options">
+                    <button class="payment-button" id="nfcButton">
+                        💳 Приложить карту
+                    </button>
+                    <button class="payment-button" id="qrButton" style="display: none;">
+                        📱 Скан QR
+                    </button>
+                </div>
+                
+                <!-- Test Payment Instructions -->
+                <div class="test-instructions" id="testInstructions" style="display: none; margin-top: 20px; text-align: center;">
+                    <div style="font-size: clamp(12px, 3vw, 14px); color: #94a3b8; background: rgba(102, 126, 234, 0.1); padding: 12px; border-radius: 12px; border: 1px solid rgba(102, 126, 234, 0.2);">
+                        💡 Тестовый режим: Нажмите клавишу <strong>N</strong> для эмуляции NFC карты
+                    </div>
+                </div>
+            </div>
+
+            <!-- Idle Screen -->
+            <div class="screen idle-screen" id="idleScreen">
+                <div class="idle-content">
+                    <div class="idle-icon">💤</div>
+                    <div class="idle-title">Терминал готов к работе</div>
+                    <div class="idle-subtitle">Ожидание запроса на оплату...</div>
+                    <div class="idle-animation">
+                        <div class="pulse-ring"></div>
+                        <div class="pulse-ring pulse-ring-delay-1"></div>
+                        <div class="pulse-ring pulse-ring-delay-2"></div>
+                    </div>
+                    <div class="idle-info">
+                        <div class="terminal-status">
+                            <span class="status-dot online"></span>
+                            Терминал онлайн
+                        </div>
+                        <div class="last-activity" id="lastActivity">
+                            Последняя активность: никогда
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Processing Screen -->
+            <div class="screen processing-screen" id="processingScreen">
+                <div class="status-message">Обработка платежа...</div>
+                <div class="processing-spinner"></div>
+                <div class="processing-dots">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            </div>
+
+            <!-- Success Screen -->
+            <div class="screen success-screen" id="successScreen">
+                <div class="success-icon"></div>
+                <div class="status-message">Платеж успешен!</div>
+                <div class="amount-display" id="successAmount">0₽</div>
+                <div class="countdown" id="successCountdown">Возврат через 3 сек...</div>
+            </div>
+
+            <!-- Error Screen -->
+            <div class="screen error-screen" id="errorScreen">
+                <div class="error-icon"></div>
+                <div class="status-message">Ошибка платежа</div>
+                <div class="error-code" id="errorCode">Код ошибки: E001</div>
+                <div class="countdown" id="errorCountdown">Возврат через 5 сек...</div>
+            </div>
+
+            <!-- QR Code Screen -->
+            <div class="screen" id="qrScreen">
+                <div class="status-message">Отсканируйте QR-код</div>
+                <div class="qr-code-container">
+                    <img class="qr-code" id="qrCodeImage" src="" alt="QR Code">
+                </div>
+                <div class="amount-display" id="qrAmount">0₽</div>
+                <div class="countdown" id="qrCountdown">Ожидание оплаты...</div>
+            </div>
+
+            <!-- NFC Waiting Screen -->
+            <div class="screen" id="nfcWaitingScreen">
+                <div class="status-message">Приложите карту к терминалу</div>
+                <div class="card-visual" style="animation: cardFloat 2s ease-in-out infinite;">
+                    <div class="card-logo">💳</div>
+                </div>
+                <div class="amount-display" id="nfcAmount">0₽</div>
+                <div class="countdown" id="nfcCountdown">Ожидание карты...</div>
+                
+                <!-- Payment Systems Logos for NFC -->
+                <div class="payment-system-logos" id="nfcPaymentSystemLogos" style="display: block; margin-top: 20px;">
+                    <div class="payment-systems-title">Принимаем к оплате:</div>
+                    <div class="payment-systems-grid" id="nfcPaymentSystemsGrid">
+                        <!-- Логотипы будут добавлены динамически -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        class TerminalUI {
+            constructor() {
+                this.terminalId = this.getTerminalIdFromURL();
+                this.websocket = null;
+                this.currentAmount = 0; // No default amount
+                this.currentScreen = 'login';
+                this.countdownTimer = null;
+                this.isAuthenticated = false;
+                this.hasActivePayment = false;
+                this.lastActivity = null;
+                this.idleTimer = null;
+                this.paymentMonitoringTimer = null; // Добавляем таймер мониторинга
+                this.currentPaymentId = null; // ID текущего платежа
+                this.periodicPaymentCheckTimer = null; // Таймер периодической проверки
+                this.currentPaymentMethod = 'nfc'; // Метод текущего платежа
+                this.paymentSystems = []; // Доступные платежные системы
+                this.isTestPayment = false; // Флаг тестового платежа
+                
+                this.initializeElements();
+                this.setupEventListeners();
+                this.loadTerminalInfo();
+            }
+
+            getTerminalIdFromURL() {
+                const path = window.location.pathname;
+                const matches = path.match(/\/terminal\/(.+)$/);
+                return matches ? matches[1] : 'T001';
+            }
+
+            initializeElements() {
+                this.elements = {
+                    terminalId: document.getElementById('terminalId'),
+                    terminalOperator: document.getElementById('terminalOperator'),
+                    terminalNameDisplay: document.getElementById('terminalNameDisplay'),
+                    terminalDetailsDisplay: document.getElementById('terminalDetailsDisplay'),
+                    passwordInput: document.getElementById('passwordInput'),
+                    loginButton: document.getElementById('loginButton'),
+                    loginError: document.getElementById('loginError'),
+                    amountDisplay: document.getElementById('amountDisplay'),
+                    successAmount: document.getElementById('successAmount'),
+                    qrAmount: document.getElementById('qrAmount'),
+                    qrCodeImage: document.getElementById('qrCodeImage'),
+                    nfcButton: document.getElementById('nfcButton'),
+                    qrButton: document.getElementById('qrButton'),
+                    paymentMethodDisplay: document.getElementById('paymentMethodDisplay'),
+                    errorCode: document.getElementById('errorCode'),
+                    successCountdown: document.getElementById('successCountdown'),
+                    errorCountdown: document.getElementById('errorCountdown'),
+                    qrCountdown: document.getElementById('qrCountdown'),
+                    lastActivity: document.getElementById('lastActivity'),
+                    screens: {
+                        login: document.getElementById('loginScreen'),
+                        idle: document.getElementById('idleScreen'),
+                        waiting: document.getElementById('waitingScreen'),
+                        processing: document.getElementById('processingScreen'),
+                        success: document.getElementById('successScreen'),
+                        error: document.getElementById('errorScreen'),
+                        qr: document.getElementById('qrScreen'),
+                        nfcWaiting: document.getElementById('nfcWaitingScreen')
+                    }
+                };
+            }
+
+            connectWebSocket() {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}`;
+                
+                this.websocket = new WebSocket(wsUrl);
+                
+                this.websocket.onopen = () => {
+                    console.log('WebSocket connected');
+                    this.sendMessage({
+                        type: 'terminal_ready',
+                        terminalId: this.terminalId
+                    });
+                };
+
+                this.websocket.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        this.handleWebSocketMessage(data);
+                    } catch (error) {
+                        console.error('Error parsing WebSocket message:', error);
+                    }
+                };
+
+                this.websocket.onclose = () => {
+                    console.log('WebSocket disconnected');
+                    setTimeout(() => this.connectWebSocket(), 3000);
+                };
+
+                this.websocket.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                };
+            }
+
+            sendMessage(message) {
+                if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
+                    this.websocket.send(JSON.stringify(message));
+                }
+            }
+
+            handleWebSocketMessage(data) {
+                console.log('📡 Terminal received WebSocket message:', data.type, data);
+                
+                switch (data.type) {
+                    case 'terminal_config':
+                        console.log('🔧 Terminal config update received');
+                        this.updateTerminalInfo(data.config);
+                        break;
+                    case 'payment_request':
+                        console.log('💳 Payment request received');
+                        this.handlePaymentRequest(data);
+                        break;
+                    case 'payment_status':
+                        console.log('📊 Payment status update received');
+                        this.handlePaymentStatus(data);
+                        break;
+                    default:
+                        console.log('❓ Unknown message type:', data.type, data);
+                }
+            }
+
+            updateTerminalInfo(config) {
+                if (this.isAuthenticated) {
+                    this.elements.terminalId.textContent = `Терминал ${this.terminalId}`;
+                    this.elements.terminalOperator.textContent = config.operator || 'Неизвестный оператор';
+                }
+            }
+
+            setupEventListeners() {
+                // Login functionality
+                this.elements.loginButton.addEventListener('click', () => {
+                    this.handleLogin();
+                });
+
+                this.elements.passwordInput.addEventListener('keypress', (event) => {
+                    if (event.key === 'Enter') {
+                        this.handleLogin();
+                    }
+                });
+
+                // Payment functionality (only works when authenticated)
+                this.elements.nfcButton.addEventListener('click', () => {
+                    if (this.isAuthenticated) {
+                        this.handleNFCPayment();
+                    }
+                });
+
+                this.elements.qrButton.addEventListener('click', () => {
+                    if (this.isAuthenticated) {
+                        this.handleQRPayment();
+                    }
+                });
+
+                // Эмуляция NFC только для тестовых платежей
+                document.addEventListener('keydown', (event) => {
+                    if ((event.key === 'n' || event.key === 'N') && this.isAuthenticated && this.hasActivePayment && this.isTestPayment) {
+                        this.simulateNFCDetection();
+                    } else if ((event.key === 'n' || event.key === 'N') && this.isAuthenticated && this.hasActivePayment && !this.isTestPayment) {
+                        // Показываем сообщение, что эмуляция недоступна
+                        alert('Эмуляция NFC недоступна для реальных платежей. Приложите настоящую карту к терминалу.');
+                    }
+                });
+            }
+
+            async loadTerminalInfo() {
+                try {
+                    const response = await fetch(`/api/terminals/${this.terminalId}`);
+                    if (response.ok) {
+                        const terminal = await response.json();
+                        this.updateTerminalDisplay(terminal);
+                    } else {
+                        this.elements.terminalNameDisplay.textContent = `Терминал ${this.terminalId}`;
+                        this.elements.terminalDetailsDisplay.textContent = 'Терминал не найден';
+                    }
+                } catch (error) {
+                    console.error('Error loading terminal info:', error);
+                    this.elements.terminalNameDisplay.textContent = `Терминал ${this.terminalId}`;
+                    this.elements.terminalDetailsDisplay.textContent = 'Ошибка загрузки';
+                }
+            }
+
+            updateTerminalDisplay(terminal) {
+                this.elements.terminalNameDisplay.textContent = terminal.name || `Терминал ${terminal.id}`;
+                this.elements.terminalDetailsDisplay.textContent = `${terminal.operator || 'Неизвестный оператор'} • ${terminal.location || 'Местоположение не указано'}`;
+                
+                // Update header as well
+                this.elements.terminalId.textContent = `Терминал ${terminal.id}`;
+                this.elements.terminalOperator.textContent = terminal.operator || 'Неизвестный оператор';
+            }
+
+            async handleLogin() {
+                const password = this.elements.passwordInput.value.trim();
+                
+                if (!password) {
+                    this.showLoginError('Введите пароль');
+                    return;
+                }
+
+                this.elements.loginButton.disabled = true;
+                this.elements.loginButton.innerHTML = '<div class="loading"><div class="spinner"></div>Вход...</div>';
+
+                try {
+                    const response = await fetch(`/api/terminals/${this.terminalId}/unlock`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ password: password })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.isAuthenticated = true;
+                        this.hideLoginError();
+                        this.connectWebSocket();
+                        this.updateLastActivity();
+                        this.checkForActivePayments();
+                        
+                        // Запускаем периодическую проверку активных платежей каждые 10 секунд
+                        this.startPeriodicPaymentCheck();
+                    } else {
+                        this.showLoginError(result.error || 'Неверный пароль');
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    this.showLoginError('Ошибка сети');
+                } finally {
+                    this.elements.loginButton.disabled = false;
+                    this.elements.loginButton.innerHTML = '🔓 Войти';
+                }
+            }
+
+            showLoginError(message) {
+                this.elements.loginError.textContent = message;
+                this.elements.loginError.style.display = 'block';
+            }
+
+            hideLoginError() {
+                this.elements.loginError.style.display = 'none';
+            }
+
+            async checkForActivePayments() {
+                try {
+                    // Сначала очищаем старые платежи (старше 30 минут)
+                    await fetch(`/api/payments/cleanup?olderThanMinutes=30`, {
+                        method: 'DELETE'
+                    });
+                    
+                    // Проверяем активные платежи (pending и processing) только за последние 30 минут
+                    const cutoffTime = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+                    
+                    const pendingResponse = await fetch(`/api/payments?terminalId=${this.terminalId}&status=pending&limit=10`);
+                    const pendingPayments = await pendingResponse.json();
+                    
+                    const processingResponse = await fetch(`/api/payments?terminalId=${this.terminalId}&status=processing&limit=10`);
+                    const processingPayments = await processingResponse.json();
+                    
+                    // Фильтруем только свежие платежи (созданные в последние 30 минут)
+                    // И исключаем временные платежи от системы уведомлений
+                    const recentPending = pendingPayments.filter(p => {
+                        const createdAt = new Date(p.created_at);
+                        const isRecent = createdAt > new Date(Date.now() - 30 * 60 * 1000);
+                        const isNotTemporary = !p.id.startsWith('notify-') && !p.id.startsWith('temp-');
+                        return isRecent && isNotTemporary;
+                    });
+                    
+                    const recentProcessing = processingPayments.filter(p => {
+                        const createdAt = new Date(p.created_at);
+                        const isRecent = createdAt > new Date(Date.now() - 30 * 60 * 1000);
+                        const isNotTemporary = !p.id.startsWith('notify-') && !p.id.startsWith('temp-');
+                        return isRecent && isNotTemporary;
+                    });
+                    
+                    const activePayments = [...recentPending, ...recentProcessing];
+                    
+                    if (activePayments.length > 0) {
+                        // Есть активный платеж
+                        const payment = activePayments[0];
+                        this.currentAmount = payment.amount;
+                        this.hasActivePayment = true;
+                        this.currentPaymentId = payment.id;
+                        this.currentPaymentMethod = payment.method || 'nfc'; // Получаем метод из платежа
+                        this.isTestPayment = false; // Активные платежи из базы НЕ тестовые
+                        this.updateDisplay();
+                        
+                        console.log(`Found active payment: ${payment.id} (${payment.amount/100}₽)`);
+                        
+                        // Загружаем платежные системы и обновляем интерфейс
+                        await this.loadPaymentSystems();
+                        this.updatePaymentMethodsDisplay();
+                        
+                        // Показываем соответствующий экран в зависимости от статуса
+                        if (payment.status === 'processing') {
+                            this.showScreen('processing');
+                        } else {
+                            this.showScreen('waiting');
+                        }
+                        
+                        // Запускаем мониторинг статуса платежа
+                        this.startPaymentMonitoring(payment.id);
+                    } else {
+                        // Нет активных платежей - показываем экран ожидания
+                        console.log('No active payments found - showing idle screen');
+                        this.hasActivePayment = false;
+                        this.currentPaymentId = null;
+                        this.currentAmount = 0;
+                        this.stopPaymentMonitoring();
+                        this.showIdleScreen();
+                    }
+                } catch (error) {
+                    console.error('Error checking active payments:', error);
+                    this.showIdleScreen();
+                }
+            }
+
+            showIdleScreen() {
+                this.showScreen('idle');
+                this.updateLastActivityDisplay();
+                this.startIdleTimer();
+                this.stopPaymentMonitoring(); // Останавливаем мониторинг при переходе в idle
+            }
+
+            startPaymentMonitoring(paymentId) {
+                // Останавливаем предыдущий мониторинг
+                this.stopPaymentMonitoring();
+                
+                // Запускаем периодическую проверку статуса платежа
+                this.paymentMonitoringTimer = setInterval(async () => {
+                    try {
+                        const response = await fetch(`/api/payments/${paymentId}`);
+                        if (response.ok) {
+                            const payment = await response.json();
+                            
+                            if (payment.status === 'completed') {
+                                this.stopPaymentMonitoring();
+                                this.showSuccess(payment.amount);
+                            } else if (payment.status === 'failed') {
+                                this.stopPaymentMonitoring();
+                                this.showError(payment.error_code || 'E001', 'Платеж отклонен');
+                            } else if (payment.status === 'processing') {
+                                this.showScreen('processing');
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error monitoring payment:', error);
+                    }
+                }, 2000); // Проверяем каждые 2 секунды
+            }
+
+            stopPaymentMonitoring() {
+                if (this.paymentMonitoringTimer) {
+                    clearInterval(this.paymentMonitoringTimer);
+                    this.paymentMonitoringTimer = null;
+                }
+            }
+
+            startPeriodicPaymentCheck() {
+                // Останавливаем предыдущую проверку
+                this.stopPeriodicPaymentCheck();
+                
+                // Запускаем периодическую проверку каждые 30 секунд (менее навязчиво)
+                this.periodicPaymentCheckTimer = setInterval(() => {
+                    // Проверяем только если терминал аутентифицирован и находится в idle режиме
+                    if (this.isAuthenticated && !this.hasActivePayment && this.currentScreen === 'idle') {
+                        console.log('Periodic check for new payments...');
+                        this.checkForActivePayments();
+                    }
+                }, 30000); // 30 секунд вместо 10
+            }
+
+            stopPeriodicPaymentCheck() {
+                if (this.periodicPaymentCheckTimer) {
+                    clearInterval(this.periodicPaymentCheckTimer);
+                    this.periodicPaymentCheckTimer = null;
+                }
+            }
+
+            async loadPaymentSystems() {
+                try {
+                    const response = await fetch('/api/payment-systems?active_only=true');
+                    if (response.ok) {
+                        this.paymentSystems = await response.json();
+                        this.updatePaymentMethodsDisplay();
+                    }
+                } catch (error) {
+                    console.error('Error loading payment systems:', error);
+                }
+            }
+
+            updatePaymentMethodsDisplay() {
+                // Обновляем отображение способов оплаты в зависимости от метода
+                const methodNames = {
+                    'nfc': this.isTestPayment ? 'NFC (Тестовый режим)' : 'NFC (Бесконтактная карта)',
+                    'qr': 'QR-код',
+                    'hybrid': this.isTestPayment ? 'NFC (Тест) или QR-код' : 'NFC или QR-код'
+                };
+                
+                // Обновляем отображение выбранного метода
+                this.elements.paymentMethodDisplay.textContent = methodNames[this.currentPaymentMethod] || 'Неизвестный метод';
+                
+                // Показываем/скрываем кнопки в зависимости от метода
+                if (this.currentPaymentMethod === 'nfc') {
+                    if (this.isTestPayment) {
+                        // Тестовый NFC - показываем кнопку для эмуляции
+                        this.elements.nfcButton.style.display = 'inline-flex';
+                        this.elements.nfcButton.innerHTML = '💳 Тестовая оплата';
+                        this.elements.qrButton.style.display = 'none';
+                    } else {
+                        // Реальный NFC - сразу переходим к ожиданию карты, не показываем кнопки
+                        this.elements.nfcButton.style.display = 'none';
+                        this.elements.qrButton.style.display = 'none';
+                        this.showNFCWaitingScreen();
+                        return; // Выходим, чтобы не показывать экран waiting
+                    }
+                } else if (this.currentPaymentMethod === 'qr') {
+                    // QR код - сразу генерируем QR, не показываем кнопки
+                    this.elements.nfcButton.style.display = 'none';
+                    this.elements.qrButton.style.display = 'none';
+                    this.generateQRCode();
+                    return; // Выходим, чтобы не показывать экран waiting
+                } else if (this.currentPaymentMethod === 'hybrid') {
+                    // Гибридный режим - показываем кнопки для выбора
+                    this.elements.nfcButton.style.display = 'inline-flex';
+                    this.elements.qrButton.style.display = 'inline-flex';
+                    this.elements.nfcButton.innerHTML = this.isTestPayment ? '💳 Тестовая оплата' : '💳 Приложить карту';
+                    this.elements.qrButton.innerHTML = '📱 Скан QR';
+                }
+                
+                // Показываем логотипы для NFC платежей (включая гибридный режим)
+                this.showPaymentSystemLogos();
+                
+                // Показываем инструкции для тестовых платежей
+                this.showTestInstructions();
+            }
+
+            updateNFCPaymentDisplay() {
+                // Обновляем кнопку NFC для отображения доступных систем
+                const nfcButton = this.elements.nfcButton;
+                if (this.paymentSystems.length > 0) {
+                    nfcButton.innerHTML = '💳 Приложить карту';
+                } else {
+                    nfcButton.innerHTML = '💳 Оплатить';
+                }
+            }
+
+            updateQRPaymentDisplay() {
+                // Для QR кодов оставляем как есть
+                const qrButton = this.elements.qrButton;
+                qrButton.innerHTML = '📱 Скан QR';
+            }
+
+            showPaymentSystemLogos() {
+                // Находим контейнер для логотипов или создаем его
+                let logosContainer = document.getElementById('paymentSystemLogos');
+                if (!logosContainer) {
+                    logosContainer = document.createElement('div');
+                    logosContainer.id = 'paymentSystemLogos';
+                    logosContainer.className = 'payment-system-logos';
+                    
+                    // Вставляем после кнопок оплаты
+                    const paymentOptions = document.querySelector('.payment-options');
+                    paymentOptions.parentNode.insertBefore(logosContainer, paymentOptions.nextSibling);
+                }
+                
+                // Очищаем контейнер
+                logosContainer.innerHTML = '';
+                
+                // Показываем логотипы для NFC платежей (включая гибридный режим) и если есть активные системы
+                const activePaymentSystems = this.paymentSystems.filter(system => system.is_active);
+                
+                if ((this.currentPaymentMethod === 'nfc' || this.currentPaymentMethod === 'hybrid') && activePaymentSystems.length > 0) {
+                    // Добавляем заголовок
+                    const title = document.createElement('div');
+                    title.className = 'payment-systems-title';
+                    title.textContent = 'Принимаем к оплате:';
+                    logosContainer.appendChild(title);
+                    
+                    // Добавляем логотипы
+                    const logosGrid = document.createElement('div');
+                    logosGrid.className = 'payment-systems-grid';
+                    
+                    // Сортируем по порядку
+                    activePaymentSystems.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+                    
+                    activePaymentSystems.forEach(system => {
+                        const logoItem = document.createElement('div');
+                        logoItem.className = 'payment-system-item';
+                        
+                        if (system.logo_url) {
+                            const logo = document.createElement('img');
+                            logo.src = system.logo_url;
+                            logo.alt = system.display_name;
+                            logo.className = 'payment-system-logo';
+                            logo.onerror = () => {
+                                // Если изображение не загрузилось, показываем текст
+                                logoItem.innerHTML = `<span class="payment-system-text">${system.display_name}</span>`;
+                            };
+                            logoItem.appendChild(logo);
+                        } else {
+                            // Если нет URL логотипа, показываем текст
+                            logoItem.innerHTML = `<span class="payment-system-text">${system.display_name}</span>`;
+                        }
+                        
+                        logosGrid.appendChild(logoItem);
+                    });
+                    
+                    logosContainer.appendChild(logosGrid);
+                    logosContainer.style.display = 'block';
+                } else {
+                    logosContainer.style.display = 'none';
+                }
+            }
+
+            showTestInstructions() {
+                const instructionsElement = document.getElementById('testInstructions');
+                if (instructionsElement) {
+                    // Показываем инструкции только для тестовых платежей с NFC
+                    if (this.isTestPayment && (this.currentPaymentMethod === 'nfc' || this.currentPaymentMethod === 'hybrid')) {
+                        instructionsElement.style.display = 'block';
+                    } else {
+                        instructionsElement.style.display = 'none';
+                    }
+                }
+            }
+
+            showNFCWaitingScreen() {
+                // Для реальных NFC платежей показываем специальный экран ожидания карты
+                this.updateDisplay(); // Обновляем сумму
+                
+                // Обновляем сумму на NFC экране
+                const nfcAmountElement = document.getElementById('nfcAmount');
+                if (nfcAmountElement) {
+                    nfcAmountElement.textContent = this.formatAmount(this.currentAmount);
+                }
+                
+                // Показываем логотипы платежных систем на NFC экране
+                this.showNFCPaymentSystemLogos();
+                
+                this.showScreen('nfcWaiting');
+                
+                // Устанавливаем таймаут
+                setTimeout(() => {
+                    if (this.currentScreen === 'nfcWaiting') {
+                        this.showError('E006', 'Время ожидания карты истекло');
+                    }
+                }, 30000); // 30 секунд
+            }
+
+            showNFCPaymentSystemLogos() {
+                const logosGrid = document.getElementById('nfcPaymentSystemsGrid');
+                if (!logosGrid) return;
+                
+                // Очищаем контейнер
+                logosGrid.innerHTML = '';
+                
+                // Показываем логотипы активных платежных систем
+                const activePaymentSystems = this.paymentSystems.filter(system => system.is_active);
+                
+                if (activePaymentSystems.length > 0) {
+                    // Сортируем по порядку
+                    activePaymentSystems.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+                    
+                    activePaymentSystems.forEach(system => {
+                        const logoItem = document.createElement('div');
+                        logoItem.className = 'payment-system-item';
+                        
+                        if (system.logo_url) {
+                            const logo = document.createElement('img');
+                            logo.src = system.logo_url;
+                            logo.alt = system.display_name;
+                            logo.className = 'payment-system-logo';
+                            logo.onerror = () => {
+                                logoItem.innerHTML = `<span class="payment-system-text">${system.display_name}</span>`;
+                            };
+                            logoItem.appendChild(logo);
+                        } else {
+                            logoItem.innerHTML = `<span class="payment-system-text">${system.display_name}</span>`;
+                        }
+                        
+                        logosGrid.appendChild(logoItem);
+                    });
+                }
+            }
+
+            generateQRCode() {
+                // Автоматически генерируем QR код для QR платежей
+                this.handleQRPayment();
+            }
+
+            updateLastActivity() {
+                this.lastActivity = new Date();
+                this.updateLastActivityDisplay();
+            }
+
+            updateLastActivityDisplay() {
+                if (this.lastActivity) {
+                    const now = new Date();
+                    const diff = Math.floor((now - this.lastActivity) / 1000);
+                    
+                    let timeText;
+                    if (diff < 60) {
+                        timeText = 'только что';
+                    } else if (diff < 3600) {
+                        timeText = `${Math.floor(diff / 60)} мин назад`;
+                    } else {
+                        timeText = `${Math.floor(diff / 3600)} ч назад`;
+                    }
+                    
+                    this.elements.lastActivity.textContent = `Последняя активность: ${timeText}`;
+                } else {
+                    this.elements.lastActivity.textContent = 'Последняя активность: никогда';
+                }
+            }
+
+            startIdleTimer() {
+                // Обновляем время каждую минуту
+                this.idleTimer = setInterval(() => {
+                    this.updateLastActivityDisplay();
+                }, 60000);
+            }
+
+            stopIdleTimer() {
+                if (this.idleTimer) {
+                    clearInterval(this.idleTimer);
+                    this.idleTimer = null;
+                }
+            }
+
+            updateDisplay() {
+                const formattedAmount = this.formatAmount(this.currentAmount);
+                this.elements.amountDisplay.textContent = formattedAmount;
+                this.elements.successAmount.textContent = formattedAmount;
+                this.elements.qrAmount.textContent = formattedAmount;
+            }
+
+            formatAmount(amountInKopecks) {
+                const rubles = Math.floor(amountInKopecks / 100);
+                const kopecks = amountInKopecks % 100;
+                return kopecks > 0 ? `${rubles}.${kopecks.toString().padStart(2, '0')}₽` : `${rubles}₽`;
+            }
+
+            showScreen(screenName) {
+                // Hide all screens
+                Object.values(this.elements.screens).forEach(screen => {
+                    screen.classList.remove('active');
+                });
+                
+                // Show target screen
+                if (this.elements.screens[screenName]) {
+                    this.elements.screens[screenName].classList.add('active');
+                    this.currentScreen = screenName;
+                }
+                
+                // Сбрасываем состояние кнопок при переходе на экран ожидания
+                if (screenName === 'waiting') {
+                    this.elements.nfcButton.disabled = false;
+                    this.elements.qrButton.disabled = false;
+                }
+            }
+
+            handleNFCPayment() {
+                if (!this.hasActivePayment) {
+                    this.showError('E005', 'Нет активного запроса на оплату');
+                    return;
+                }
+                
+                if (this.isTestPayment) {
+                    // Для тестовых платежей используем эмуляцию
+                    this.showScreen('processing');
+                    this.updateLastActivity();
+                    this.elements.nfcButton.innerHTML = '💳 Обработка...';
+                    this.elements.nfcButton.disabled = true;
+                    
+                    // Simulate NFC detection after a short delay
+                    setTimeout(() => {
+                        this.simulateNFCDetection();
+                    }, 1000);
+                } else {
+                    // Для реальных платежей показываем экран ожидания карты
+                    this.showNFCWaitingScreen();
+                }
+            }
+
+            simulateNFCDetection() {
+                const nfcData = {
+                    cardNumber: '**** **** **** 1234',
+                    cardType: 'visa',
+                    amount: this.currentAmount
+                };
+
+                this.sendMessage({
+                    type: 'nfc_detected',
+                    terminalId: this.terminalId,
+                    paymentId: this.currentPaymentId, // Передаем ID текущего платежа
+                    nfcData: nfcData
+                });
+            }
+
+            async handleQRPayment() {
+                if (!this.hasActivePayment) {
+                    this.showError('E005', 'Нет активного запроса на оплату');
+                    return;
+                }
+                
+                // Для QR не показываем processing, сразу генерируем QR
+                this.updateLastActivity();
+                
+                try {
+                    const response = await fetch('/api/qr/generate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            terminalId: this.terminalId,
+                            amount: this.currentAmount,
+                            currency: 'RUB',
+                            paymentId: this.currentPaymentId // Используем текущий paymentId
+                        })
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.showQRCode(result.qrCode, result.paymentId || this.currentPaymentId);
+                    } else {
+                        this.showError('E002', 'Ошибка генерации QR-кода');
+                    }
+                } catch (error) {
+                    console.error('Error generating QR code:', error);
+                    this.showError('E003', 'Ошибка сети');
+                }
+            }
+
+            showQRCode(qrCodeDataURL, paymentId) {
+                this.elements.qrCodeImage.src = qrCodeDataURL;
+                this.showScreen('qr');
+                
+                // Start countdown for QR code expiration
+                this.startQRCountdown(300); // 5 minutes
+                
+                // Poll for payment status
+                this.pollPaymentStatus(paymentId);
+            }
+
+            startQRCountdown(seconds) {
+                this.clearCountdown();
+                let remaining = seconds;
+                
+                const updateCountdown = () => {
+                    const minutes = Math.floor(remaining / 60);
+                    const secs = remaining % 60;
+                    this.elements.qrCountdown.textContent = 
+                        `Истекает через ${minutes}:${secs.toString().padStart(2, '0')}`;
+                    
+                    if (remaining <= 0) {
+                        this.showError('E004', 'QR-код истек');
+                        return;
+                    }
+                    
+                    remaining--;
+                    this.countdownTimer = setTimeout(updateCountdown, 1000);
+                };
+                
+                updateCountdown();
+            }
+
+            async pollPaymentStatus(paymentId) {
+                const poll = async () => {
+                    try {
+                        const response = await fetch(`/api/payments/${paymentId}`);
+                        const payment = await response.json();
+                        
+                        if (payment.status === 'completed') {
+                            this.showSuccess(payment.amount);
+                        } else if (payment.status === 'failed') {
+                            this.showError(payment.error_code || 'E001', 'Платеж отклонен');
+                        } else if (payment.status === 'pending' || payment.status === 'processing') {
+                            // Continue polling
+                            setTimeout(poll, 2000);
+                        }
+                    } catch (error) {
+                        console.error('Error polling payment status:', error);
+                    }
+                };
+                
+                setTimeout(poll, 2000);
+            }
+
+            handlePaymentRequest(data) {
+                this.currentAmount = data.amount;
+                this.hasActivePayment = true;
+                this.currentPaymentId = data.paymentId;
+                this.currentPaymentMethod = data.method || 'nfc'; // Сохраняем метод платежа
+                this.isTestPayment = data.testPayment || false; // Определяем, тестовый ли это платеж
+                this.updateLastActivity();
+                this.stopIdleTimer();
+                this.updateDisplay();
+                
+                // Загружаем доступные способы оплаты и обновляем интерфейс
+                this.loadPaymentSystems().then(() => {
+                    this.updatePaymentMethodsDisplay();
+                    
+                    // Показываем соответствующий экран в зависимости от метода
+                    if (this.currentPaymentMethod === 'nfc' && !this.isTestPayment) {
+                        // Для реальных NFC платежей сразу показываем экран ожидания карты
+                        return; // updatePaymentMethodsDisplay уже вызвал showNFCWaitingScreen
+                    } else if (this.currentPaymentMethod === 'qr') {
+                        // Для QR платежей сразу генерируем QR код
+                        return; // updatePaymentMethodsDisplay уже вызвал generateQRCode
+                    } else {
+                        // Для тестовых NFC и гибридных платежей показываем экран выбора
+                        this.showScreen('waiting');
+                    }
+                });
+                
+                // Запускаем мониторинг статуса платежа
+                if (data.paymentId) {
+                    this.startPaymentMonitoring(data.paymentId);
+                }
+            }
+
+            handlePaymentStatus(data) {
+                console.log('📱 Terminal received payment status update:', data);
+                
+                switch (data.status) {
+                    case 'processing':
+                        console.log('🔄 Payment processing - showing processing screen');
+                        this.showScreen('processing');
+                        break;
+                    case 'completed':
+                        console.log('✅ Payment completed - showing success screen');
+                        this.showSuccess(data.result?.amount || this.currentAmount);
+                        break;
+                    case 'failed':
+                        console.log('❌ Payment failed - showing error screen');
+                        this.showError(
+                            data.result?.errorCode || 'E001',
+                            data.message || 'Платеж отклонен'
+                        );
+                        break;
+                    default:
+                        console.log('⚠️ Unknown payment status:', data.status);
+                }
+            }
+
+            showSuccess(amount) {
+                this.clearCountdown();
+                this.stopPaymentMonitoring(); // Останавливаем мониторинг
+                this.elements.successAmount.textContent = this.formatAmount(amount);
+                this.showScreen('success');
+                this.updateLastActivity();
+                
+                // Countdown to return to idle screen
+                this.startReturnCountdown(3, 'successCountdown', () => {
+                    this.hasActivePayment = false;
+                    this.currentAmount = 0;
+                    this.currentPaymentId = null;
+                    this.isTestPayment = false; // Сбрасываем флаг тестового платежа
+                    this.showIdleScreen();
+                });
+            }
+
+            showError(errorCode, message) {
+                this.clearCountdown();
+                this.stopPaymentMonitoring(); // Останавливаем мониторинг
+                this.elements.errorCode.textContent = `Код ошибки: ${errorCode}`;
+                this.showScreen('error');
+                this.updateLastActivity();
+                
+                // Countdown to return to idle screen
+                this.startReturnCountdown(5, 'errorCountdown', () => {
+                    this.hasActivePayment = false;
+                    this.currentAmount = 0;
+                    this.currentPaymentId = null;
+                    this.isTestPayment = false; // Сбрасываем флаг тестового платежа
+                    this.showIdleScreen();
+                });
+            }
+
+            startReturnCountdown(seconds, elementId, callback) {
+                this.clearCountdown();
+                let remaining = seconds;
+                
+                const updateCountdown = () => {
+                    this.elements[elementId].textContent = `Возврат через ${remaining} сек...`;
+                    
+                    if (remaining <= 0) {
+                        callback();
+                        return;
+                    }
+                    
+                    remaining--;
+                    this.countdownTimer = setTimeout(updateCountdown, 1000);
+                };
+                
+                updateCountdown();
+            }
+
+            clearCountdown() {
+                if (this.countdownTimer) {
+                    clearTimeout(this.countdownTimer);
+                    this.countdownTimer = null;
+                }
+            }
+        }
+
+        // Initialize terminal when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new TerminalUI();
+        });
+    </script>
+</body>
+</html>

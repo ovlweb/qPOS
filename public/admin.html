@@ -1,0 +1,2083 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Административная панель - Система эквайринга</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .admin-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            background: rgba(15, 15, 35, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 
+                0 32px 64px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            text-shadow: 0 0 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #94a3b8;
+            font-weight: 400;
+            opacity: 0.9;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(15, 15, 35, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 
+                0 32px 64px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.5), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 
+                0 40px 80px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-right: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(15, 15, 35, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 28px;
+            text-align: center;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-card:hover::before {
+            left: 100%;
+        }
+
+        .stat-number {
+            font-size: 2.8rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            text-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .terminals-section {
+            background: rgba(15, 15, 35, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 
+                0 32px 64px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .section-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 
+                0 12px 30px rgba(102, 126, 234, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 
+                0 16px 40px rgba(102, 126, 234, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary {
+            background: rgba(148, 163, 184, 0.15);
+            color: #94a3b8;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(148, 163, 184, 0.25);
+            color: #f1f5f9;
+            transform: translateY(-2px);
+            border-color: rgba(148, 163, 184, 0.5);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 
+                0 12px 30px rgba(16, 185, 129, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-3px);
+            box-shadow: 
+                0 16px 40px rgba(16, 185, 129, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            box-shadow: 
+                0 12px 30px rgba(239, 68, 68, 0.4),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-3px);
+            box-shadow: 
+                0 16px 40px rgba(239, 68, 68, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.2);
+        }
+
+        .terminals-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: rgba(15, 15, 35, 0.8);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .terminals-table th,
+        .terminals-table td {
+            padding: 18px 24px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .terminals-table th {
+            background: rgba(102, 126, 234, 0.1);
+            font-weight: 700;
+            color: #f1f5f9;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .terminals-table td {
+            color: #e2e8f0;
+        }
+
+        .terminals-table tr:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-active {
+            background: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+        }
+
+        .status-inactive {
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+
+        .status-maintenance {
+            background: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+        }
+
+        .connection-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .connection-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .connection-online {
+            background: #28a745;
+        }
+
+        .connection-offline {
+            background: #dc3545;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            animation: modalFadeIn 0.4s ease-out;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: rgba(15, 15, 35, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 36px;
+            max-width: 520px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 
+                0 40px 80px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            animation: modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @keyframes modalSlideIn {
+            from { transform: scale(0.8) translateY(-40px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .modal-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .close-btn {
+            background: rgba(148, 163, 184, 0.1);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            font-size: 24px;
+            cursor: pointer;
+            color: #94a3b8;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.3);
+            transform: scale(1.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 700;
+            color: #f1f5f9;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid rgba(148, 163, 184, 0.2);
+            border-radius: 16px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: rgba(15, 15, 35, 0.5);
+            color: #f1f5f9;
+            backdrop-filter: blur(10px);
+        }
+
+        .form-control::placeholder {
+            color: #64748b;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(15, 15, 35, 0.8);
+            box-shadow: 
+                0 0 0 4px rgba(102, 126, 234, 0.1),
+                0 8px 25px rgba(102, 126, 234, 0.15);
+        }
+
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 12px center;
+            background-repeat: no-repeat;
+            background-size: 16px;
+            padding-right: 40px;
+        }
+
+        .loading {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: rgba(40, 167, 69, 0.1);
+            color: #155724;
+            border: 1px solid rgba(40, 167, 69, 0.2);
+        }
+
+        .alert-error {
+            background: rgba(220, 53, 69, 0.1);
+            color: #721c24;
+            border: 1px solid rgba(220, 53, 69, 0.2);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .empty-state-text {
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .admin-container {
+                padding: 15px;
+            }
+
+            .header {
+                padding: 20px;
+                margin-bottom: 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .terminals-table {
+                font-size: 0.9rem;
+            }
+
+            .terminals-table th,
+            .terminals-table td {
+                padding: 12px 15px;
+            }
+
+            .section-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .modal-content {
+                margin: 20px;
+                padding: 25px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-number {
+                font-size: 2rem;
+            }
+
+            .terminals-table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Система эквайринга</h1>
+            <p>Административная панель управления терминалами</p>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalTerminals">0</div>
+                <div class="stat-label">Всего терминалов</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="onlineTerminals">0</div>
+                <div class="stat-label">Онлайн</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="todayPayments">0</div>
+                <div class="stat-label">Платежей сегодня</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="todayAmount">0₽</div>
+                <div class="stat-label">Сумма сегодня</div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">🏪</div>
+                    <div class="card-title">Управление терминалами</div>
+                </div>
+                <p style="margin-bottom: 20px; color: #94a3b8; line-height: 1.6;">Добавляйте, редактируйте и управляйте терминалами в системе</p>
+                <button class="btn btn-primary" onclick="showAddTerminalModal()">
+                    ➕ Добавить терминал
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">💳</div>
+                    <div class="card-title">Тестовые платежи</div>
+                </div>
+                <p style="margin-bottom: 20px; color: #94a3b8; line-height: 1.6;">Отправляйте тестовые запросы на оплату для проверки терминалов</p>
+                <button class="btn btn-success" onclick="showPaymentTestModal()">
+                    🧪 Тест платежа
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">💳</div>
+                    <div class="card-title">Платежные системы</div>
+                </div>
+                <p style="margin-bottom: 20px; color: #94a3b8; line-height: 1.6;">Управляйте доступными способами оплаты и их логотипами</p>
+                <button class="btn btn-primary" onclick="showPaymentSystemsModal()">
+                    ⚙️ Управление
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon">📊</div>
+                    <div class="card-title">Мониторинг</div>
+                </div>
+                <p style="margin-bottom: 20px; color: #94a3b8; line-height: 1.6;">Отслеживайте статус и производительность системы в реальном времени</p>
+                <button class="btn btn-secondary" onclick="refreshData()">
+                    🔄 Обновить данные
+                </button>
+            </div>
+        </div>
+
+        <!-- Terminals Section -->
+        <div class="terminals-section">
+            <div class="section-header">
+                <h2 class="section-title">Терминалы</h2>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="showAddTerminalModal()">
+                        ➕ Добавить терминал
+                    </button>
+                    <button class="btn btn-secondary" onclick="refreshTerminals()">
+                        🔄 Обновить
+                    </button>
+                </div>
+            </div>
+
+            <div id="terminalsContainer">
+                <div class="loading" style="justify-content: center; padding: 40px;">
+                    <div class="spinner"></div>
+                    <span>Загрузка терминалов...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Terminal Modal -->
+    <div class="modal" id="terminalModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Добавить терминал</h3>
+                <button class="close-btn" onclick="closeModal('terminalModal')">&times;</button>
+            </div>
+            
+            <div id="modalAlert"></div>
+            
+            <form id="terminalForm">
+                <div class="form-group">
+                    <label class="form-label" for="terminalId">ID терминала</label>
+                    <input type="text" class="form-control" id="terminalId" placeholder="T001" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="terminalName">Название</label>
+                    <input type="text" class="form-control" id="terminalName" placeholder="Терминал в торговом центре" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="terminalOperator">Оператор</label>
+                    <input type="text" class="form-control" id="terminalOperator" placeholder="Сбербанк" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="terminalLocation">Местоположение</label>
+                    <input type="text" class="form-control" id="terminalLocation" placeholder="ТЦ Мега, 1 этаж">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="terminalPassword">Пароль терминала</label>
+                    <input type="password" class="form-control" id="terminalPassword" placeholder="Введите пароль для доступа к терминалу">
+                    <small style="color: #6c757d; font-size: 0.8rem; margin-top: 4px; display: block;">
+                        Пароль будет требоваться при входе в терминал для безопасности
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="terminalStatus">Статус</label>
+                    <select class="form-control form-select" id="terminalStatus">
+                        <option value="active">Активный</option>
+                        <option value="inactive">Неактивный</option>
+                        <option value="maintenance">Обслуживание</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 30px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('terminalModal')">
+                        Отмена
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="saveTerminalBtn">
+                        Сохранить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Payment Test Modal -->
+    <div class="modal" id="paymentTestModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Тестовый платеж</h3>
+                <button class="close-btn" onclick="closeModal('paymentTestModal')">&times;</button>
+            </div>
+            
+            <div id="paymentModalAlert"></div>
+            
+            <form id="paymentTestForm">
+                <div class="form-group">
+                    <label class="form-label" for="paymentTerminalId">Терминал</label>
+                    <select class="form-control form-select" id="paymentTerminalId" required>
+                        <option value="">Выберите терминал</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="paymentAmount">Сумма (в рублях)</label>
+                    <input type="number" class="form-control" id="paymentAmount" placeholder="100" min="1" max="100000" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="paymentMethod">Метод оплаты</label>
+                    <select class="form-control form-select" id="paymentMethod">
+                        <option value="nfc">Только NFC (эмуляция для теста)</option>
+                        <option value="qr">Только QR-код</option>
+                        <option value="hybrid">Гибридный (NFC + QR)</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 30px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('paymentTestModal')">
+                        Отмена
+                    </button>
+                    <button type="submit" class="btn btn-success" id="sendPaymentBtn">
+                        Отправить запрос
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Send Payment Modal -->
+    <div class="modal" id="sendPaymentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Отправить запрос на оплату</h3>
+                <button class="close-btn" onclick="closeModal('sendPaymentModal')">&times;</button>
+            </div>
+            
+            <div id="sendPaymentAlert"></div>
+            
+            <form id="sendPaymentForm">
+                <div class="form-group">
+                    <label class="form-label" for="paymentTerminalIdSend">Терминал</label>
+                    <input type="text" class="form-control" id="paymentTerminalIdSend" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="paymentAmountSend">Сумма (в рублях)</label>
+                    <input type="number" class="form-control" id="paymentAmountSend" placeholder="100" min="1" max="100000" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="paymentMethodSend">Метод оплаты</label>
+                    <select class="form-control form-select" id="paymentMethodSend">
+                        <option value="nfc">Только NFC (реальная карта)</option>
+                        <option value="qr">Только QR-код</option>
+                        <option value="hybrid">Гибридный (NFC + QR)</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 30px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('sendPaymentModal')">
+                        Отмена
+                    </button>
+                    <button type="submit" class="btn btn-success" id="sendPaymentRequestBtn">
+                        Отправить запрос
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Payment Systems Modal -->
+    <div class="modal" id="paymentSystemsModal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Управление платежными системами</h3>
+                <button class="close-btn" onclick="closeModal('paymentSystemsModal')">&times;</button>
+            </div>
+            
+            <div id="paymentSystemsAlert"></div>
+            
+            <div style="margin-bottom: 20px;">
+                <button class="btn btn-primary" onclick="showAddPaymentSystemModal()">
+                    ➕ Добавить систему
+                </button>
+            </div>
+            
+            <div id="paymentSystemsContainer">
+                <div class="loading" style="justify-content: center; padding: 40px;">
+                    <div class="spinner"></div>
+                    <span>Загрузка платежных систем...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Payment System Modal -->
+    <div class="modal" id="paymentSystemModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="paymentSystemModalTitle">Добавить платежную систему</h3>
+                <button class="close-btn" onclick="closeModal('paymentSystemModal')">&times;</button>
+            </div>
+            
+            <div id="paymentSystemModalAlert"></div>
+            
+            <form id="paymentSystemForm">
+                <div class="form-group">
+                    <label class="form-label" for="paymentSystemName">Системное имя</label>
+                    <input type="text" class="form-control" id="paymentSystemName" placeholder="visa" required>
+                    <small style="color: #6c757d; font-size: 0.8rem; margin-top: 4px; display: block;">
+                        Используется в коде (только латинские буквы, цифры, дефисы)
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="paymentSystemDisplayName">Отображаемое название</label>
+                    <input type="text" class="form-control" id="paymentSystemDisplayName" placeholder="Visa" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="paymentSystemLogoUrl">URL логотипа</label>
+                    <input type="text" class="form-control" id="paymentSystemLogoUrl" placeholder="/images/payment-systems/visa.svg">
+                    <small style="color: #6c757d; font-size: 0.8rem; margin-top: 4px; display: block;">
+                        Путь к файлу логотипа (SVG или PNG)
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="paymentSystemSortOrder">Порядок сортировки</label>
+                    <input type="number" class="form-control" id="paymentSystemSortOrder" placeholder="0" min="0">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">
+                        <input type="checkbox" id="paymentSystemIsActive" checked style="margin-right: 8px;">
+                        Активная система
+                    </label>
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 30px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('paymentSystemModal')">
+                        Отмена
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="savePaymentSystemBtn">
+                        Сохранить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        class AdminPanel {
+            constructor() {
+                this.terminals = [];
+                this.paymentSystems = [];
+                this.websocket = null;
+                this.editingTerminal = null;
+                this.editingPaymentSystem = null;
+                this.adminToken = localStorage.getItem('admin_token');
+                this.currentUser = localStorage.getItem('admin_user');
+                
+                this.checkAuthStatus();
+            }
+
+            checkAuthStatus() {
+                if (this.adminToken && this.currentUser) {
+                    this.showAdminSection();
+                    this.initializeWebSocket();
+                    this.setupEventListeners();
+                    this.loadInitialData();
+                } else {
+                    this.showLoginSection();
+                    this.setupLoginListeners();
+                }
+            }
+
+            showLoginSection() {
+                // Hide admin section and show login
+                const adminSection = document.querySelector('.admin-container');
+                if (adminSection) {
+                    adminSection.style.display = 'none';
+                }
+                
+                // Create login section if it doesn't exist
+                if (!document.getElementById('loginSection')) {
+                    this.createLoginSection();
+                }
+            }
+
+            showAdminSection() {
+                // Remove login section if it exists
+                const loginSection = document.getElementById('loginSection');
+                if (loginSection) {
+                    loginSection.remove();
+                }
+                
+                // Show admin section
+                const adminSection = document.querySelector('.admin-container');
+                if (adminSection) {
+                    adminSection.style.display = 'block';
+                }
+
+                // Update user info
+                this.updateUserInfo();
+            }
+
+            createLoginSection() {
+                const loginHTML = `
+                    <div id="loginSection" style="
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        z-index: 9999;
+                    ">
+                        <div style="
+                            background: rgba(15, 15, 35, 0.95);
+                            backdrop-filter: blur(20px);
+                            border-radius: 24px;
+                            padding: 40px;
+                            max-width: 400px;
+                            width: 90%;
+                            box-shadow: 0 32px 64px rgba(0, 0, 0, 0.4);
+                            border: 1px solid rgba(255, 255, 255, 0.1);
+                        ">
+                            <h2 style="
+                                text-align: center;
+                                color: #f1f5f9;
+                                margin-bottom: 30px;
+                                font-size: 1.8rem;
+                                font-weight: 700;
+                            ">Admin Authentication</h2>
+                            
+                            <div id="loginAlert"></div>
+                            
+                            <form id="loginForm">
+                                <div class="form-group">
+                                    <label class="form-label" for="loginUsername">Username</label>
+                                    <input type="text" class="form-control" id="loginUsername" placeholder="admin" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label" for="loginPassword">Password</label>
+                                    <input type="password" class="form-control" id="loginPassword" placeholder="Enter password" required>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary" id="loginBtn" style="width: 100%; margin-top: 20px;">
+                                    🔐 Login
+                                </button>
+                            </form>
+                            
+                            <div class="alert alert-info" style="margin-top: 20px; background: rgba(102, 126, 234, 0.1); color: #667eea; border: 1px solid rgba(102, 126, 234, 0.2);">
+                                <strong>Default Credentials:</strong><br>
+                                Username: <code>admin</code><br>
+                                Password: <code>admin123</code>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.insertAdjacentHTML('beforeend', loginHTML);
+            }
+
+            setupLoginListeners() {
+                const loginForm = document.getElementById('loginForm');
+                if (loginForm) {
+                    loginForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        this.login();
+                    });
+                }
+            }
+
+            async login() {
+                const username = document.getElementById('loginUsername').value;
+                const password = document.getElementById('loginPassword').value;
+
+                const loginBtn = document.getElementById('loginBtn');
+                const originalText = loginBtn.innerHTML;
+                loginBtn.innerHTML = '<div class="loading"><div class="spinner"></div>Logging in...</div>';
+                loginBtn.disabled = true;
+
+                try {
+                    const response = await fetch('/api/admin/auth', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ username, password })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.adminToken = result.token;
+                        this.currentUser = result.admin.username;
+                        
+                        localStorage.setItem('admin_token', this.adminToken);
+                        localStorage.setItem('admin_user', this.currentUser);
+                        
+                        this.showAlert('loginAlert', 'success', 'Login successful!');
+                        
+                        setTimeout(() => {
+                            this.showAdminSection();
+                            this.initializeWebSocket();
+                            this.setupEventListeners();
+                            this.loadInitialData();
+                        }, 1000);
+                    } else {
+                        this.showAlert('loginAlert', 'error', result.error || 'Login failed');
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    this.showAlert('loginAlert', 'error', 'Network error');
+                } finally {
+                    loginBtn.innerHTML = originalText;
+                    loginBtn.disabled = false;
+                }
+            }
+
+            logout() {
+                localStorage.removeItem('admin_token');
+                localStorage.removeItem('admin_user');
+                this.adminToken = null;
+                this.currentUser = null;
+                
+                // Close WebSocket
+                if (this.websocket) {
+                    this.websocket.close();
+                }
+                
+                // Reload page to show login
+                window.location.reload();
+            }
+
+            updateUserInfo() {
+                // Add user info to header if not exists
+                const header = document.querySelector('.header');
+                if (header && !document.getElementById('userInfo')) {
+                    const userInfoHTML = `
+                        <div id="userInfo" style="
+                            position: absolute;
+                            top: 20px;
+                            right: 20px;
+                            background: rgba(255, 255, 255, 0.1);
+                            padding: 10px 20px;
+                            border-radius: 20px;
+                            color: white;
+                            font-size: 0.9rem;
+                        ">
+                            <span>👤 ${this.currentUser}</span>
+                            <button onclick="adminPanel.logout()" style="
+                                background: rgba(255, 255, 255, 0.2);
+                                border: none;
+                                color: white;
+                                padding: 5px 10px;
+                                border-radius: 10px;
+                                margin-left: 10px;
+                                cursor: pointer;
+                                font-size: 0.8rem;
+                            ">Logout</button>
+                        </div>
+                    `;
+                    header.style.position = 'relative';
+                    header.insertAdjacentHTML('beforeend', userInfoHTML);
+                }
+            }
+
+            // Add authorization header to all API requests
+            async makeAuthenticatedRequest(url, options = {}) {
+                const headers = {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                };
+
+                if (this.adminToken) {
+                    headers['Authorization'] = `Bearer ${this.adminToken}`;
+                }
+
+                return fetch(url, {
+                    ...options,
+                    headers
+                });
+            }
+
+            initializeWebSocket() {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}`;
+                
+                this.websocket = new WebSocket(wsUrl);
+                
+                this.websocket.onopen = () => {
+                    console.log('Admin WebSocket connected');
+                    this.sendMessage({
+                        type: 'admin_connected'
+                    });
+                };
+
+                this.websocket.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        this.handleWebSocketMessage(data);
+                    } catch (error) {
+                        console.error('Error parsing WebSocket message:', error);
+                    }
+                };
+
+                this.websocket.onclose = () => {
+                    console.log('Admin WebSocket disconnected');
+                    setTimeout(() => this.initializeWebSocket(), 3000);
+                };
+
+                this.websocket.onerror = (error) => {
+                    console.error('Admin WebSocket error:', error);
+                };
+            }
+
+            sendMessage(message) {
+                if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
+                    this.websocket.send(JSON.stringify(message));
+                }
+            }
+
+            handleWebSocketMessage(data) {
+                switch (data.type) {
+                    case 'terminal_status_update':
+                        this.updateTerminalStatus(data.terminalId, data.status);
+                        break;
+                    case 'payment_notification':
+                        this.handlePaymentNotification(data);
+                        break;
+                    default:
+                        console.log('Unknown admin message type:', data.type);
+                }
+            }
+
+            setupEventListeners() {
+                // Terminal form submission
+                document.getElementById('terminalForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.saveTerminal();
+                });
+
+                // Payment test form submission
+                document.getElementById('paymentTestForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.sendTestPayment();
+                });
+
+                // Send payment form submission
+                document.getElementById('sendPaymentForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.sendPaymentRequest();
+                });
+
+                // Payment system form submission
+                document.getElementById('paymentSystemForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.savePaymentSystem();
+                });
+
+                // Close modals when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('modal')) {
+                        this.closeModal(e.target.id);
+                    }
+                });
+
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        this.closeAllModals();
+                    }
+                });
+            }
+
+            async loadInitialData() {
+                await this.refreshTerminals();
+                await this.refreshStats();
+                await this.refreshPaymentSystems();
+                this.populatePaymentTerminalSelect();
+            }
+
+            async refreshTerminals() {
+                try {
+                    const response = await this.makeAuthenticatedRequest('/api/terminals');
+                    const terminals = await response.json();
+                    
+                    if (!response.ok) {
+                        if (response.status === 401 || response.status === 403) {
+                            this.logout();
+                            return;
+                        }
+                        throw new Error(terminals.error || 'Failed to load terminals');
+                    }
+                    
+                    // Получаем статусы подключений для каждого терминала
+                    for (let terminal of terminals) {
+                        try {
+                            const statusResponse = await this.makeAuthenticatedRequest(`/api/terminals/${terminal.id}/status`);
+                            const statusData = await statusResponse.json();
+                            terminal.connection_status = statusData.connected ? 'online' : 'offline';
+                        } catch (error) {
+                            terminal.connection_status = 'offline';
+                        }
+                    }
+                    
+                    this.terminals = terminals;
+                    this.renderTerminals();
+                } catch (error) {
+                    console.error('Error loading terminals:', error);
+                    this.showError('terminalsContainer', 'Ошибка загрузки терминалов: ' + error.message);
+                }
+            }
+
+            async refreshStats() {
+                try {
+                    const [terminalsResponse, paymentsResponse] = await Promise.all([
+                        this.makeAuthenticatedRequest('/api/terminals'),
+                        this.makeAuthenticatedRequest('/api/payments/stats')
+                    ]);
+
+                    if (!terminalsResponse.ok || !paymentsResponse.ok) {
+                        if (terminalsResponse.status === 401 || paymentsResponse.status === 401) {
+                            this.logout();
+                            return;
+                        }
+                        throw new Error('Failed to load statistics');
+                    }
+
+                    const terminals = await terminalsResponse.json();
+                    const stats = await paymentsResponse.json();
+
+                    // Update statistics
+                    document.getElementById('totalTerminals').textContent = terminals.length;
+                    document.getElementById('onlineTerminals').textContent = 
+                        terminals.filter(t => t.connection_status === 'online').length;
+                    document.getElementById('todayPayments').textContent = stats.todayCount || 0;
+                    document.getElementById('todayAmount').textContent = 
+                        this.formatAmount(stats.todayAmount || 0);
+                } catch (error) {
+                    console.error('Error loading stats:', error);
+                }
+            }
+
+            renderTerminals() {
+                const container = document.getElementById('terminalsContainer');
+                
+                if (this.terminals.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🏪</div>
+                            <div class="empty-state-title">Нет терминалов</div>
+                            <div class="empty-state-text">
+                                Добавьте первый терминал для начала работы с системой
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const tableHTML = `
+                    <table class="terminals-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Название</th>
+                                <th>Оператор</th>
+                                <th>Местоположение</th>
+                                <th>Статус</th>
+                                <th>Подключение</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${this.terminals.map(terminal => this.renderTerminalRow(terminal)).join('')}
+                        </tbody>
+                    </table>
+                `;
+                
+                container.innerHTML = tableHTML;
+            }
+
+            renderTerminalRow(terminal) {
+                const statusClass = `status-${terminal.status}`;
+                const connectionClass = terminal.connection_status === 'online' ? 'connection-online' : 'connection-offline';
+                const connectionText = terminal.connection_status === 'online' ? 'Онлайн' : 'Офлайн';
+
+                return `
+                    <tr>
+                        <td><strong>${terminal.id}</strong></td>
+                        <td>${terminal.name || 'Без названия'}</td>
+                        <td>${terminal.operator || 'Не указан'}</td>
+                        <td>${terminal.location || 'Не указано'}</td>
+                        <td>
+                            <span class="status-badge ${statusClass}">
+                                ${this.getStatusText(terminal.status)}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="connection-indicator">
+                                <div class="connection-dot ${connectionClass}"></div>
+                                ${connectionText}
+                            </div>
+                        </td>
+                        <td>
+                            <button class="btn btn-secondary" onclick="adminPanel.editTerminal('${terminal.id}')" style="margin-right: 8px; padding: 6px 12px; font-size: 12px;">
+                                ✏️ Изменить
+                            </button>
+                            <button class="btn btn-success" onclick="adminPanel.showPaymentRequestModal('${terminal.id}')" style="margin-right: 8px; padding: 6px 12px; font-size: 12px;">
+                                💳 Платеж
+                            </button>
+                            <button class="btn btn-danger" onclick="adminPanel.deleteTerminal('${terminal.id}')" style="margin-right: 8px; padding: 6px 12px; font-size: 12px;">
+                                🗑️ Удалить
+                            </button>
+                            <button class="btn btn-primary" onclick="adminPanel.openTerminal('${terminal.id}')" style="padding: 6px 12px; font-size: 12px;">
+                                🖥️ Открыть
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            getStatusText(status) {
+                const statusMap = {
+                    'active': 'Активный',
+                    'inactive': 'Неактивный',
+                    'maintenance': 'Обслуживание'
+                };
+                return statusMap[status] || status;
+            }
+
+            showAddTerminalModal() {
+                this.editingTerminal = null;
+                document.getElementById('modalTitle').textContent = 'Добавить терминал';
+                document.getElementById('terminalForm').reset();
+                document.getElementById('terminalId').disabled = false;
+                this.showModal('terminalModal');
+            }
+
+            editTerminal(terminalId) {
+                const terminal = this.terminals.find(t => t.id === terminalId);
+                if (!terminal) return;
+
+                this.editingTerminal = terminal;
+                document.getElementById('modalTitle').textContent = 'Редактировать терминал';
+                
+                // Fill form with terminal data
+                document.getElementById('terminalId').value = terminal.id;
+                document.getElementById('terminalId').disabled = true;
+                document.getElementById('terminalName').value = terminal.name || '';
+                document.getElementById('terminalOperator').value = terminal.operator || '';
+                document.getElementById('terminalLocation').value = terminal.location || '';
+                document.getElementById('terminalPassword').value = ''; // Don't show existing password
+                document.getElementById('terminalStatus').value = terminal.status || 'active';
+                
+                this.showModal('terminalModal');
+            }
+
+            async saveTerminal() {
+                const formData = {
+                    id: document.getElementById('terminalId').value,
+                    name: document.getElementById('terminalName').value,
+                    operator: document.getElementById('terminalOperator').value,
+                    location: document.getElementById('terminalLocation').value,
+                    password: document.getElementById('terminalPassword').value,
+                    status: document.getElementById('terminalStatus').value
+                };
+
+                // Validate required fields
+                if (!formData.name || !formData.operator) {
+                    this.showAlert('modalAlert', 'error', 'Название и оператор обязательны');
+                    return;
+                }
+
+                if (!this.editingTerminal && !formData.password) {
+                    this.showAlert('modalAlert', 'error', 'Пароль обязателен для нового терминала');
+                    return;
+                }
+
+                const saveBtn = document.getElementById('saveTerminalBtn');
+                const originalText = saveBtn.innerHTML;
+                saveBtn.innerHTML = '<div class="loading"><div class="spinner"></div>Сохранение...</div>';
+                saveBtn.disabled = true;
+
+                try {
+                    const url = this.editingTerminal ? 
+                        `/api/terminals/${formData.id}` : 
+                        '/api/terminals';
+                    const method = this.editingTerminal ? 'PUT' : 'POST';
+
+                    // Don't send empty password for updates
+                    if (this.editingTerminal && !formData.password) {
+                        delete formData.password;
+                    }
+
+                    const response = await this.makeAuthenticatedRequest(url, {
+                        method: method,
+                        body: JSON.stringify(formData)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success || response.ok) {
+                        this.showAlert('modalAlert', 'success', 
+                            this.editingTerminal ? 'Терминал обновлен' : 'Терминал добавлен');
+                        
+                        setTimeout(() => {
+                            this.closeModal('terminalModal');
+                            this.refreshTerminals();
+                            this.refreshStats();
+                        }, 1000);
+                    } else {
+                        if (response.status === 401 || response.status === 403) {
+                            this.logout();
+                            return;
+                        }
+                        this.showAlert('modalAlert', 'error', result.message || result.error || 'Ошибка сохранения');
+                    }
+                } catch (error) {
+                    console.error('Error saving terminal:', error);
+                    this.showAlert('modalAlert', 'error', 'Ошибка сети');
+                } finally {
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.disabled = false;
+                }
+            }
+
+            showPaymentRequestModal(terminalId) {
+                const terminal = this.terminals.find(t => t.id === terminalId);
+                if (!terminal) return;
+
+                document.getElementById('paymentTerminalIdSend').value = `${terminal.id} - ${terminal.name || 'Без названия'}`;
+                document.getElementById('sendPaymentForm').dataset.terminalId = terminal.id;
+                document.getElementById('sendPaymentForm').reset();
+                document.getElementById('paymentTerminalIdSend').value = `${terminal.id} - ${terminal.name || 'Без названия'}`;
+                this.showModal('sendPaymentModal');
+            }
+
+            async sendPaymentRequest() {
+                const terminalId = document.getElementById('sendPaymentForm').dataset.terminalId;
+                const amount = parseInt(document.getElementById('paymentAmountSend').value) * 100; // Convert to kopecks
+                const method = document.getElementById('paymentMethodSend').value;
+
+                if (!amount || amount <= 0) {
+                    this.showAlert('sendPaymentAlert', 'error', 'Введите корректную сумму');
+                    return;
+                }
+
+                const sendBtn = document.getElementById('sendPaymentRequestBtn');
+                const originalText = sendBtn.innerHTML;
+                sendBtn.innerHTML = '<div class="loading"><div class="spinner"></div>Отправка...</div>';
+                sendBtn.disabled = true;
+
+                try {
+                    const response = await this.makeAuthenticatedRequest(`/api/terminals/${terminalId}/payment-request`, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            amount: amount,
+                            currency: 'RUB',
+                            method: method
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (result.message || response.ok) {
+                        this.showAlert('sendPaymentAlert', 'success', 
+                            `Запрос на оплату отправлен на терминал ${terminalId}`);
+                        
+                        setTimeout(() => {
+                            this.closeModal('sendPaymentModal');
+                        }, 2000);
+                    } else {
+                        if (response.status === 401 || response.status === 403) {
+                            this.logout();
+                            return;
+                        }
+                        this.showAlert('sendPaymentAlert', 'error', result.error || 'Ошибка отправки запроса');
+                    }
+                } catch (error) {
+                    console.error('Error sending payment request:', error);
+                    this.showAlert('sendPaymentAlert', 'error', 'Ошибка сети');
+                } finally {
+                    sendBtn.innerHTML = originalText;
+                    sendBtn.disabled = false;
+                }
+            }
+
+            showPaymentTestModal() {
+                document.getElementById('paymentTestForm').reset();
+                this.populatePaymentTerminalSelect();
+                this.showModal('paymentTestModal');
+            }
+
+            populatePaymentTerminalSelect() {
+                const select = document.getElementById('paymentTerminalId');
+                select.innerHTML = '<option value="">Выберите терминал</option>';
+                
+                this.terminals
+                    .filter(t => t.status === 'active')
+                    .forEach(terminal => {
+                        const option = document.createElement('option');
+                        option.value = terminal.id;
+                        option.textContent = `${terminal.id} - ${terminal.name || 'Без названия'}`;
+                        select.appendChild(option);
+                    });
+            }
+
+            async sendTestPayment() {
+                const formData = {
+                    terminalId: document.getElementById('paymentTerminalId').value,
+                    amount: parseInt(document.getElementById('paymentAmount').value) * 100, // Convert to kopecks
+                    method: document.getElementById('paymentMethod').value
+                };
+
+                const sendBtn = document.getElementById('sendPaymentBtn');
+                const originalText = sendBtn.innerHTML;
+                sendBtn.innerHTML = '<div class="loading"><div class="spinner"></div>Отправка...</div>';
+                sendBtn.disabled = true;
+
+                try {
+                    const response = await this.makeAuthenticatedRequest('/api/admin/test-payment', {
+                        method: 'POST',
+                        body: JSON.stringify(formData)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.showAlert('paymentModalAlert', 'success', 
+                            `Тестовый платеж отправлен на терминал ${formData.terminalId}`);
+                        
+                        setTimeout(() => {
+                            this.closeModal('paymentTestModal');
+                        }, 2000);
+                    } else {
+                        if (response.status === 401 || response.status === 403) {
+                            this.logout();
+                            return;
+                        }
+                        this.showAlert('paymentModalAlert', 'error', result.message || result.error || 'Ошибка отправки');
+                    }
+                } catch (error) {
+                    console.error('Error sending test payment:', error);
+                    this.showAlert('paymentModalAlert', 'error', 'Ошибка сети');
+                } finally {
+                    sendBtn.innerHTML = originalText;
+                    sendBtn.disabled = false;
+                }
+            }
+
+            openTerminal(terminalId) {
+                const url = `/terminal/${terminalId}`;
+                window.open(url, '_blank');
+            }
+
+            async deleteTerminal(terminalId) {
+                if (!confirm(`Вы уверены, что хотите удалить терминал ${terminalId}?`)) {
+                    return;
+                }
+
+                try {
+                    const response = await this.makeAuthenticatedRequest(`/api/terminals/${terminalId}`, {
+                        method: 'DELETE'
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success || response.ok) {
+                        this.refreshTerminals();
+                        this.refreshStats();
+                        alert('Терминал успешно удален');
+                    } else {
+                        if (response.status === 401 || response.status === 403) {
+                            this.logout();
+                            return;
+                        }
+                        alert(result.message || result.error || 'Ошибка удаления терминала');
+                    }
+                } catch (error) {
+                    console.error('Error deleting terminal:', error);
+                    alert('Ошибка сети при удалении терминала');
+                }
+            }
+
+            updateTerminalStatus(terminalId, status) {
+                const terminal = this.terminals.find(t => t.id === terminalId);
+                if (terminal) {
+                    terminal.connection_status = status;
+                    this.renderTerminals();
+                    this.refreshStats();
+                }
+            }
+
+            handlePaymentNotification(data) {
+                // Update statistics when payment is processed
+                this.refreshStats();
+                
+                // Show notification (optional)
+                console.log('Payment notification:', data);
+            }
+
+            showModal(modalId) {
+                const modal = document.getElementById(modalId);
+                modal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+
+            closeModal(modalId) {
+                const modal = document.getElementById(modalId);
+                modal.classList.remove('show');
+                document.body.style.overflow = '';
+                
+                // Clear alerts
+                const alertContainers = modal.querySelectorAll('[id$="Alert"]');
+                alertContainers.forEach(container => container.innerHTML = '');
+            }
+
+            closeAllModals() {
+                const modals = document.querySelectorAll('.modal.show');
+                modals.forEach(modal => {
+                    this.closeModal(modal.id);
+                });
+            }
+
+            showAlert(containerId, type, message) {
+                const container = document.getElementById(containerId);
+                const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
+                container.innerHTML = `
+                    <div class="alert ${alertClass}">
+                        ${message}
+                    </div>
+                `;
+            }
+
+            showError(containerId, message) {
+                const container = document.getElementById(containerId);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">⚠️</div>
+                        <div class="empty-state-title">Ошибка</div>
+                        <div class="empty-state-text">${message}</div>
+                    </div>
+                `;
+            }
+
+            formatAmount(amountInKopecks) {
+                const rubles = Math.floor(amountInKopecks / 100);
+                const kopecks = amountInKopecks % 100;
+                return kopecks > 0 ? `${rubles}.${kopecks.toString().padStart(2, '0')}₽` : `${rubles}₽`;
+            }
+
+            async refreshData() {
+                await this.refreshTerminals();
+                await this.refreshStats();
+                await this.refreshPaymentSystems();
+                this.populatePaymentTerminalSelect();
+            }
+
+            // Payment Systems Management
+            async refreshPaymentSystems() {
+                try {
+                    const response = await fetch('/api/payment-systems');
+                    this.paymentSystems = await response.json();
+                    this.renderPaymentSystems();
+                } catch (error) {
+                    console.error('Error loading payment systems:', error);
+                    this.showError('paymentSystemsContainer', 'Ошибка загрузки платежных систем');
+                }
+            }
+
+            renderPaymentSystems() {
+                const container = document.getElementById('paymentSystemsContainer');
+                
+                if (this.paymentSystems.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">💳</div>
+                            <div class="empty-state-title">Нет платежных систем</div>
+                            <div class="empty-state-text">
+                                Добавьте платежные системы для отображения в терминалах
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const tableHTML = `
+                    <table class="terminals-table">
+                        <thead>
+                            <tr>
+                                <th>Логотип</th>
+                                <th>Название</th>
+                                <th>Системное имя</th>
+                                <th>Порядок</th>
+                                <th>Статус</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${this.paymentSystems.map(system => this.renderPaymentSystemRow(system)).join('')}
+                        </tbody>
+                    </table>
+                `;
+                
+                container.innerHTML = tableHTML;
+            }
+
+            renderPaymentSystemRow(system) {
+                const statusClass = system.is_active ? 'status-active' : 'status-inactive';
+                const statusText = system.is_active ? 'Активная' : 'Неактивная';
+
+                return `
+                    <tr>
+                        <td>
+                            ${system.logo_url ? 
+                                `<img src="${system.logo_url}" alt="${system.display_name}" style="height: 24px; max-width: 60px;">` : 
+                                '<span style="color: #6c757d;">Нет логотипа</span>'
+                            }
+                        </td>
+                        <td><strong>${system.display_name}</strong></td>
+                        <td><code>${system.name}</code></td>
+                        <td>${system.sort_order}</td>
+                        <td>
+                            <span class="status-badge ${statusClass}">
+                                ${statusText}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-secondary" onclick="adminPanel.editPaymentSystem('${system.id}')" style="margin-right: 8px; padding: 6px 12px; font-size: 12px;">
+                                ✏️ Изменить
+                            </button>
+                            <button class="btn ${system.is_active ? 'btn-secondary' : 'btn-success'}" onclick="adminPanel.togglePaymentSystem('${system.id}')" style="margin-right: 8px; padding: 6px 12px; font-size: 12px;">
+                                ${system.is_active ? '⏸️ Отключить' : '▶️ Включить'}
+                            </button>
+                            <button class="btn btn-danger" onclick="adminPanel.deletePaymentSystem('${system.id}')" style="padding: 6px 12px; font-size: 12px;">
+                                🗑️ Удалить
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            showPaymentSystemsModal() {
+                this.refreshPaymentSystems();
+                this.showModal('paymentSystemsModal');
+            }
+
+            showAddPaymentSystemModal() {
+                this.editingPaymentSystem = null;
+                document.getElementById('paymentSystemModalTitle').textContent = 'Добавить платежную систему';
+                document.getElementById('paymentSystemForm').reset();
+                document.getElementById('paymentSystemName').disabled = false;
+                document.getElementById('paymentSystemIsActive').checked = true;
+                this.showModal('paymentSystemModal');
+            }
+
+            editPaymentSystem(systemId) {
+                const system = this.paymentSystems.find(s => s.id === systemId);
+                if (!system) return;
+
+                this.editingPaymentSystem = system;
+                document.getElementById('paymentSystemModalTitle').textContent = 'Редактировать платежную систему';
+                
+                // Fill form with system data
+                document.getElementById('paymentSystemName').value = system.name || '';
+                document.getElementById('paymentSystemName').disabled = true;
+                document.getElementById('paymentSystemDisplayName').value = system.display_name || '';
+                document.getElementById('paymentSystemLogoUrl').value = system.logo_url || '';
+                document.getElementById('paymentSystemSortOrder').value = system.sort_order || 0;
+                document.getElementById('paymentSystemIsActive').checked = system.is_active;
+                
+                this.showModal('paymentSystemModal');
+            }
+
+            async savePaymentSystem() {
+                const formData = {
+                    name: document.getElementById('paymentSystemName').value,
+                    display_name: document.getElementById('paymentSystemDisplayName').value,
+                    logo_url: document.getElementById('paymentSystemLogoUrl').value,
+                    sort_order: parseInt(document.getElementById('paymentSystemSortOrder').value) || 0,
+                    is_active: document.getElementById('paymentSystemIsActive').checked ? 1 : 0
+                };
+
+                // Validate required fields
+                if (!formData.name || !formData.display_name) {
+                    this.showAlert('paymentSystemModalAlert', 'error', 'Системное имя и отображаемое название обязательны');
+                    return;
+                }
+
+                const saveBtn = document.getElementById('savePaymentSystemBtn');
+                const originalText = saveBtn.innerHTML;
+                saveBtn.innerHTML = '<div class="loading"><div class="spinner"></div>Сохранение...</div>';
+                saveBtn.disabled = true;
+
+                try {
+                    const url = this.editingPaymentSystem ? 
+                        `/api/payment-systems/${this.editingPaymentSystem.id}` : 
+                        '/api/payment-systems';
+                    const method = this.editingPaymentSystem ? 'PUT' : 'POST';
+
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        this.showAlert('paymentSystemModalAlert', 'success', 
+                            this.editingPaymentSystem ? 'Платежная система обновлена' : 'Платежная система добавлена');
+                        
+                        setTimeout(() => {
+                            this.closeModal('paymentSystemModal');
+                            this.refreshPaymentSystems();
+                        }, 1000);
+                    } else {
+                        this.showAlert('paymentSystemModalAlert', 'error', result.error || 'Ошибка сохранения');
+                    }
+                } catch (error) {
+                    console.error('Error saving payment system:', error);
+                    this.showAlert('paymentSystemModalAlert', 'error', 'Ошибка сети');
+                } finally {
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.disabled = false;
+                }
+            }
+
+            async togglePaymentSystem(systemId) {
+                try {
+                    const response = await fetch(`/api/payment-systems/${systemId}/toggle`, {
+                        method: 'POST'
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        this.refreshPaymentSystems();
+                    } else {
+                        alert(result.error || 'Ошибка изменения статуса');
+                    }
+                } catch (error) {
+                    console.error('Error toggling payment system:', error);
+                    alert('Ошибка сети');
+                }
+            }
+
+            async deletePaymentSystem(systemId) {
+                const system = this.paymentSystems.find(s => s.id === systemId);
+                if (!confirm(`Вы уверены, что хотите удалить платежную систему "${system?.display_name || systemId}"?`)) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/payment-systems/${systemId}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (response.ok) {
+                        this.refreshPaymentSystems();
+                        alert('Платежная система успешно удалена');
+                    } else {
+                        const result = await response.json();
+                        alert(result.error || 'Ошибка удаления платежной системы');
+                    }
+                } catch (error) {
+                    console.error('Error deleting payment system:', error);
+                    alert('Ошибка сети при удалении платежной системы');
+                }
+            }
+        }
+
+        // Global functions for onclick handlers
+        let adminPanel;
+
+        function showAddTerminalModal() {
+            adminPanel.showAddTerminalModal();
+        }
+
+        function showPaymentTestModal() {
+            adminPanel.showPaymentTestModal();
+        }
+
+        function showPaymentRequestModal(terminalId) {
+            adminPanel.showPaymentRequestModal(terminalId);
+        }
+
+        function showPaymentSystemsModal() {
+            adminPanel.showPaymentSystemsModal();
+        }
+
+        function showAddPaymentSystemModal() {
+            adminPanel.showAddPaymentSystemModal();
+        }
+
+        function refreshData() {
+            adminPanel.refreshData();
+        }
+
+        function refreshTerminals() {
+            adminPanel.refreshTerminals();
+        }
+
+        function closeModal(modalId) {
+            adminPanel.closeModal(modalId);
+        }
+
+        // Initialize admin panel when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            adminPanel = new AdminPanel();
+        });
+    </script>
+</body>
+</html>
