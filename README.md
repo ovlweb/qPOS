@@ -78,7 +78,7 @@ QWALLET_PORT=3000
 #### Start Terminal System
 
 ```bash
-./start-both-servers.sh
+./initialization.sh
 ```
 
 This will start the Terminal System on port 3030.
