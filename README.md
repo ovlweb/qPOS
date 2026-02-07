@@ -45,8 +45,8 @@ and yeah, made with funny ai
 
 ```bash
 # Clone the repository
-git clone <repository-url>
-cd payment-terminal-system
+git clone [https://github.com/ovlweb/qPOS]
+cd qPOS
 
 # Install dependencies
 npm install
@@ -134,11 +134,6 @@ Access the admin panel at: http://localhost:3030/admin
 ### Terminal Interface
 
 Access terminals at: http://localhost:3030/terminal/{TERMINAL_ID}
-
-**Available terminals:**
-- T001 (Password: `password123`)
-- T900 (Password: `2535`)
-- T100 (Password: `password123`)
 
 **Terminal workflow:**
 1. Login with terminal password
